@@ -14,8 +14,8 @@ public:
 	{
 		Parameters ret;
 		ret.Set("name","PCG");
-		ret.Set("tol",1.0e-7);
-		ret.Set("rtol",1.0e-4);
+		ret.Set("tol",1.0e-10);
+		ret.Set("rtol",1.0e-7);
 		ret.Set("dtol",1.0e+10);
 		ret.Set("maxiters",5000);
 		ret.Set("verbosity",1);
@@ -69,9 +69,9 @@ public:
 			std::cout << "PCG " << std::setw(4) << 0 << " " << std::setw(12) << resid << " | " << ftol;
 			if( ptrue )
 				std::cout << " true " << std::setw(12) << Resid(A, b, x);
-			//~ std::cout << std::endl;
-			std::cout << "\r";
-			std::cout.flush();
+			std::cout << std::endl;
+			//~ std::cout << "\r";
+			//~ std::cout.flush();
 		}
         while( resid > ftol && resid < dtol && iters < maxiters+1 )
 		{
