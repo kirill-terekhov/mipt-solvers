@@ -1,9 +1,9 @@
-#include "conjugate_gradient.h"
+#include "pcg.h"
 
 int main(int argc, char ** argv)
 {
 
-	ConjugateGradient Solver;
+	PCG< DummySolver > Solver;
 
 	if (argc < 2)
 	{
