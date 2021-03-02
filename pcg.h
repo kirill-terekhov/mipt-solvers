@@ -55,7 +55,7 @@ public:
 		int iters = 1;
 		double resid, resid0, beta, alpha, kappa,ftol;
 		const CSRMatrix & A = *ptr_A;
-		idx_t size = A.Size();
+		idx_t size = (idx_t)A.Size();
         x.resize(size,0.0);
         std::copy(b.begin(),b.end(),r.begin());
         A.Multiply(-1.0,x,1.0,r);

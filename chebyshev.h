@@ -71,7 +71,7 @@ public:
 		int maxiters = GetParameters().Get<int>("maxiters");
 		double tol   = GetParameters().Get<double>("tol");
 		const CSRMatrix & A = *ptr_A;
-		idx_t size = A.Size();
+		idx_t size = (idx_t)A.Size();
 		double resid = 0, alpha, beta;
 		int iters = 0;
 		x.resize(A.Size(),0.0);
