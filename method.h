@@ -29,7 +29,7 @@ public:
 		ret.Set("name","DummySolver");
 		return ret;
 	}
-	bool Setup(const CSRMatrix & A) {return true;}
+	bool Setup(const CSRMatrix & A) {(void)A; return true;}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const {x = b; return true;}
 	size_t Bytes() const {return 0;}
 };

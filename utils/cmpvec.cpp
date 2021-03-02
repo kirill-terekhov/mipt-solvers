@@ -14,8 +14,7 @@ int main(int argc, char ** argv)
 		if( A.size() == B.size() ) 
 		{
 			double r = 0.0;
-#pragma omp parallel for reduction(+:r)
-			for(int i = 0; i < A.size(); ++i)
+			for(idx_t i = 0; i < A.size(); ++i)
 			{
 				double c = A[i] - B[i];
 				r += c*c;
