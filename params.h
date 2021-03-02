@@ -81,6 +81,7 @@ class Parameters
 		while( !get_name(input,name).eof() )
 		{
 			//~ std::cout << name;
+			if (name.empty()) continue;
 			if( name[name.size()-1] == ':' )
 				sub_list[name.substr(0,name.size()-1)].pretty_read(input);
 			else if( name == "/" )
