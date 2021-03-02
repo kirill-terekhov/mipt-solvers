@@ -479,13 +479,13 @@ public:
 		return err == 0;
 	}
 	inline size_t Nonzeros() const {return a.size();}
-	inline size_t Size() const {return ia.size()-1;}
-	inline idx_t RowSize(idx_t i) const {return ia[i+1]-ia[i];}
-	inline idx_t Col(idx_t i, idx_t k) const {return ja[ia[i]+k];}
+	inline idx_t Size() const {return (idx_t)(ia.size()-1);}
+	inline idx_t RowSize(idx_t i) const { idx_t k = i + 1;  return ia[k] - ia[i]; }
+	inline idx_t Col(idx_t i, idx_t k) const { idx_t q = ia[i] + k;  return ja[q]; }
 	inline idx_t Col(const std::pair<idx_t,idx_t> & p) const {return Col(p.first,p.second);}
 	inline idx_t & Col(idx_t i, idx_t k) {return ja[ia[i]+k];}
 	inline idx_t & Col(const std::pair<idx_t,idx_t> & p) {return Col(p.first,p.second);}
-	inline const KeyType & Val(idx_t i, idx_t k) const {return a[ia[i]+k];}
+	inline const KeyType& Val(idx_t i, idx_t k) const { idx_t q = ia[i] + k;  return a[q]; }
 	inline const KeyType & Val(const std::pair<idx_t,idx_t> & p) const {return Val(p.first,p.second);}
 	inline KeyType & Val(idx_t i, idx_t k) {return a[ia[i]+k];}
 	inline KeyType & Val(const std::pair<idx_t,idx_t> & p) {return Val(p.first,p.second);}
