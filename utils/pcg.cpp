@@ -1,10 +1,10 @@
 #include "pcg.h"
-#include "chebyshev.h"
+#include "ilduc.h"
 
 int main(int argc, char ** argv)
 {
 
-	PCG< Chebyshev > Solver;
+	PCG< ILDUC > Solver;
 
 	if (argc < 2)
 	{

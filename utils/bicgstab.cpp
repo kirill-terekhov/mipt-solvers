@@ -1,9 +1,10 @@
-#include "pcg.h"
+#include "bicgstab.h"
+#include "ilduc.h"
 
 int main(int argc, char ** argv)
 {
 
-	PCG< DummySolver > Solver;
+	BICGSTAB< ILDUC > Solver;
 
 	if (argc < 2)
 	{

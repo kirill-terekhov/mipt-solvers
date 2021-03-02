@@ -3,6 +3,7 @@
 
 #include "datatype.h"
 #include "vector.h"
+#include "row_accumulator.h"
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -186,6 +187,43 @@ public:
 			Cols = std::max(Cols,Colsloc);
 		}
 		return Cols;
+	}
+	// C = A * B
+	CSRMatrixType operator *(const CSRMatrixType & B) const
+	{
+		const CSRMatrixType & A = *this;
+		idx_t ColsA = A.Columns(), ColsB = B.Columns();
+		//number of columns in A may be less then size of B, i.e. if A is singular
+		if(ColsA > B.Size()) throw "Wrong argument size";
+		CSRMatrixType ret;
+		RowAccumulator<KeyType> List(ColsB);
+		for(idx_t i = 0; i < A.Size(); ++i)
+		{
+			for(idx_t j = A.ia[i]; j < A.ia[i+1]; ++j)
+				List.Add(B.ia[A.ja[j]],B.ia[A.ja[j]+1],B.ja,B.a,A.a[j]);
+			List.Get(ret.get_ja(),ret.get_a());
+			ret.FinalizeRow();
+			List.Clear();
+		}
+		return ret;
+	}
+	CSRMatrixType operator -(const CSRMatrixType & B) const
+	{
+		const CSRMatrixType & A = *this;
+		//number of columns may be different, i.e. one matrix is singular
+		idx_t ColsA = A.Columns(), ColsB = B.Columns(); 
+		if(A.Size() != B.Size()) throw "Wrong argument size";
+		CSRMatrixType ret;
+		RowAccumulator<KeyType> List(std::max(ColsA,ColsB));
+		for(idx_t i = 0; i < A.Size(); ++i)
+		{
+			List.Add(A.ia[i],A.ia[i+1],A.ja,A.a,1.0);
+			List.Add(B.ia[i],B.ia[i+1],B.ja,B.a,-1.0);
+			List.Get(ret.get_ja(),ret.get_a());
+			ret.FinalizeRow();
+			List.Clear();
+		}
+		return ret;
 	}
 	CSRMatrixType Transpose(bool square = false) const
 	{
