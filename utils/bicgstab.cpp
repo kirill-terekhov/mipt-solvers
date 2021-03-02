@@ -38,7 +38,7 @@ int main(int argc, char ** argv)
 		
 		
 		
-		Solver.GetParameters().Load("params_cg.txt");
+		Solver.GetParameters().Load("params.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		Solver.GetParameters().Print();
 		if( Solver.Setup(A) && Solver.Solve(b,x) )
