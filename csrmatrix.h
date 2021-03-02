@@ -441,7 +441,7 @@ public:
 		return err == 0;
 	}
 	inline size_t Nonzeros() const {return a.size();}
-	inline size_t Size() const {return ia.size()-1;}
+	inline idx_t Size() const {return (idx_t)(ia.size()-1);}
 	inline idx_t RowSize(idx_t i) const { idx_t k = i + 1;  return ia[k] - ia[i]; }
 	inline idx_t Col(idx_t i, idx_t k) const { idx_t q = ia[i] + k;  return ja[q]; }
 	inline idx_t Col(const std::pair<idx_t,idx_t> & p) const {return Col(p.first,p.second);}
