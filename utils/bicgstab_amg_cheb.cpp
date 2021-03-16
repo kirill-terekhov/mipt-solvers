@@ -1,10 +1,12 @@
-#include "pcg.h"
+#include "bicgstab.h"
+#include "amg_ruge_stuben.h"
+#include "chebyshev.h"
 #include "ilduc.h"
 
 int main(int argc, char ** argv)
 {
 
-	PCG< ILDUC > Solver;
+	BICGSTAB< AMGRugeStuben< Chebyshev, BICGSTAB<ILDUC> > > Solver;
 
 	if (argc < 2)
 	{

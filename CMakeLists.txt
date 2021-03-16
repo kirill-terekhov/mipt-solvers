@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 2.6)
-project(lect2)
+project(lect4)
 
 
-add_library(lect2 INTERFACE)
-add_executable(PCG_ILDUC        utils/pcg.cpp)
-add_executable(BICGSTAB_ILDUC   utils/bicgstab.cpp)
+add_library(lect4 INTERFACE)
+add_executable(PCG_AMG_CHEB        utils/pcg_amg_cheb.cpp)
+add_executable(BICGSTAB_AMG_CHEB   utils/bicgstab_amg_cheb.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
 
-install(TARGETS lect2 EXPORT lect2-targets
+install(TARGETS lect4 EXPORT lect4-targets
 	ARCHIVE DESTINATION lib
 	LIBRARY DESTINATION lib
 	RUNTIME DESTINATION bin
 	PUBLIC_HEADER DESTINATION include)
-install(EXPORT lect2-targets DESTINATION cmake)
+install(EXPORT lect4-targets DESTINATION cmake)

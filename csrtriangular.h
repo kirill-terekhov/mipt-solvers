@@ -116,7 +116,7 @@ public:
 	}
 	CSRTriangular Transpose(bool square = true) const
 	{
-		Type tnew;
+		Type tnew = LowerCSR;
 		if( t == UpperCSR ) tnew = LowerCSR;
 		else if( t == LowerCSR ) tnew = UpperCSR;
 		else if( t == UpperCSC ) tnew = LowerCSC;
