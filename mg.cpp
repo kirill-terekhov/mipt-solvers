@@ -38,9 +38,9 @@ double gauss_seidel(const std::vector<double> & r, //rhs
 	{
 		double u_old = u[i];
 		u[i] = 0.5 * ( u[i-1] + u[i+1] + r[i] );
-		norm += std::fabs( u[i] - u_old );
+		norm += std::pow( u[i] - u_old , 2);
 	}
-	return norm;
+	return std::sqrt(norm);
 }
 
 // solve a 1d poission problem using gauss-seidel method
@@ -103,7 +103,7 @@ void multigrid_poisson_1d (
 	size_t k = std::log2 ( n );
 	if ( n != std::pow ( 2, k ) ) 
 	{
-		std::cout << "Number of cells should be power of 2, got " << n << std::endl;
+		std::cout << "Number of cells for multi-grid should be power of 2, got " << n << std::endl;
 		return;
 	}
 	std::vector< std::vector<double> > r(k); //right hand side for k levels
@@ -178,11 +178,15 @@ double exact( double x )
   return x * ( x - 1.0 ) * std::exp ( x );
 }
 
-int main()
+int main(int argc, char ** argv)
 {
-	const int N = 512;
-	singlegrid_poisson_1d(N,0,1,0.0,0.0,force,exact);
+	int N = 128;
+	if( argc > 1 ) N = atoi(argv[1]);
+	
 	multigrid_poisson_1d(N,0,1,0.0,0.0,force,exact);
+	
+	singlegrid_poisson_1d(N,0,1,0.0,0.0,force,exact);
+	
 	return 0;
 }
 
