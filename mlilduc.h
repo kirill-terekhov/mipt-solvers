@@ -35,7 +35,7 @@ public:
 	{
 		Parameters ret;
 		ret.Set("name","MLILDUC");
-		ret.Set("drop_tolerance",0.01);
+		ret.Set("drop_tolerance",0.1);
 		ret.Set("diagonal_tolerance",1.0e-7);
 		ret.Set("diagonal_perturbation",1.0e-9);
 		ret.Set("pivot_condition",2);
@@ -337,7 +337,6 @@ public:
 				}
 			}
 			//compute Schur, S-version
-			if( print ) std::cout << "compute Schur" << std::endl;
 			{
 				CSRMatrix EU, LF;
 				{ //compute EU
