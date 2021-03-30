@@ -68,27 +68,33 @@ public:
 	idx_t InsertOrdered(idx_t curr, idx_t ind, const KeyType & val)
 	{
 		if (Contains(ind))
+		{
 			Get(ind) += val;
-		else if (first == EOL)
-		{
-			next[ind] = first;
-			first = ind;
-			value[ind] = val;
+			return ind;
 		}
-		else
+		else if (1 + val != 1)
 		{
-			idx_t foll = curr;
-			while (foll < ind)
+			if (first == EOL || first > ind) //no entries
 			{
-				curr = foll;
-				foll = next[curr];
+				next[ind] = first;
+				first = ind;
+				value[ind] = val;
 			}
-			next[curr] = ind;
-			next[ind] = foll;
-			value[ind] = val;
-			if (first > curr) first = curr;
+			else
+			{
+				idx_t foll = next[curr] == NOE ? first : curr;
+				while (foll < ind)
+				{
+					curr = foll;
+					foll = next[curr];
+				}
+				next[curr] = ind;
+				next[ind] = foll;
+				value[ind] = val;
+			}
+			return ind;
 		}
-		return ind;
+		else return curr;
 	}
 	void Sort()
 	{
@@ -122,7 +128,7 @@ public:
 		idx_t i = first;
 		while( i != EOL )
 		{
-			if( value[i] )
+			if( 1+value[i] != 1 )
 			{
 				ja.push_back(i);
 				a.push_back(value[i]);

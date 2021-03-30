@@ -38,7 +38,7 @@ public:
 		ret.Set("drop_tolerance",0.1);
 		ret.Set("diagonal_tolerance",1.0e-7);
 		ret.Set("diagonal_perturbation",1.0e-9);
-		ret.Set("pivot_condition",2);
+		ret.Set("pivot_condition",1.15);
 		ret.Set("write_matrix",0);
 		ret.Set("verbosity",1);
 		ret.Set("inverse_estimation",1);
@@ -62,7 +62,7 @@ public:
 		double dtol = GetParameters().Get<double>("diagonal_tolerance");
 		int    level        = GetParameters().Get<int>("level");
 		std::vector<bool> pivot(Ain.Size(),false);
-		size_t swaps = 0;
+		idx_t swaps = 0;
 		{
 			idx_t  report_pace = std::max<idx_t>(1,Ain.Size() / 25);
 			CSRMatrix A = Ain; //have to copy and sort rows due to CSCTraversal
@@ -348,7 +348,7 @@ public:
 							//unpack row of E
 							idx_t curr = 0;
 							for(idx_t j = 0; j < E.RowSize(k); ++j)
-								curr = row.InsertOrdered(curr,E.Col(k,j),E.Val(k,j));
+								curr = row.InsertOrdered(curr,E.Col(k,j),E.Val(k,j)/U.Val(E.Col(k,j),0));
 							//elimination with U
 							for(idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
 							{
@@ -360,15 +360,9 @@ public:
 									for(idx_t l = 1; l < U.RowSize(j); ++l)
 									{
 										assert(U.Col(U.Col(j,l),0) == U.Col(j,l)); //diagonal goes first
-										curr = row.InsertOrdered(curr,U.Col(j,l),-row.Get(j)*U.Val(j,l));
+										curr = row.InsertOrdered(curr,U.Col(j,l),-row.Get(j)*U.Val(j,l)/U.Val(U.Col(j,l),0));
 									}
 								}
-							}
-							//scale initial vector by U diagnal
-							for (idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
-							{
-								assert(U.Col(j, 0) == j); //diagonal goes first
-								row.Get(j) /= U.Val(j, 0);
 							}
 							row.Get(EU.get_ja(),EU.get_a());
 							row.Clear();
@@ -376,59 +370,42 @@ public:
 						}
 						assert(EU.Size() == CSize);
 					}
+					if( print ) std::cout << "Size: " << EU.Size() << " Nonzeroes: " << EU.Nonzeros() << std::endl;
 				}
-				if( print ) std::cout << "solve for L^{-1}F" << std::endl;
 				{ //compute LF
-					std::vector< std::vector< std::pair<idx_t, double> > > LFrows(BSize);
-					//fill LFrows with F rows and divide by L diagonal
-					for(idx_t k = 0; k < BSize; ++k)
-					{
-						for(idx_t j = 0; j < F.RowSize(k); ++j)
-						{
-							assert(L.Col(k,0) == k);
-							LFrows[k].push_back(std::make_pair(F.Col(k,j),F.Val(k,j)));
-						}
-					}
+					if( print ) std::cout << "solve for L^{-1}F" << std::endl;
 					//eliminate rows of LF by L column
 					{
+						CSCTraversal Lt(L, BSize);
 						RowAccumulator<double> row(CSize);
-						for(idx_t k = 0; k < BSize; ++k) //iteration over L columns
+						for (idx_t k = 0; k < BSize; ++k)
 						{
-							assert(L.Col(k,0) == k); //the first is the diagonal
-							if (!LFrows[k].empty())
+							//fill LF row with F row
+							idx_t curr = 0;
+							for (idx_t j = 0; j < F.RowSize(k); ++j)
+								curr = row.InsertOrdered(curr, F.Col(k, j), F.Val(k, j));
+							//eliminate LF rows from current row
+							for (idx_t j = Lt.Begin(); j != Lt.End(); j = Lt.Next(j)) //until diagonal
 							{
-								for (idx_t jt = 1; jt < L.RowSize(k); ++jt) //work with off-diagonal terms of k-th column of L
+								if (j != k)
 								{
-									idx_t j = L.Col(k, jt);
-									assert(j > k); //no precedence violation
-									assert(L.Col(j, 0) == j); //first is the diagonal
-									//eliminate k-th row of LF from j-th row of LF
-									//load j-th row to row accumulator
-									for (size_t m = 0; m < LFrows[j].size(); ++m)
-										row[LFrows[j][m].first] = LFrows[j][m].second;
-									//extract k-th row from row accumulator
-									for (size_t m = 0; m < LFrows[k].size(); ++m)
-										row[LFrows[k][m].first] -= LFrows[k][m].second * L.Val(k, jt);
-									//replace j-th row in LF with row accumulator
-									LFrows[j].clear();
-									for (idx_t jt = row.Begin(); jt != row.End(); jt = row.Next(jt))
-										LFrows[j].push_back(std::make_pair(jt, row.Get(jt)));
-									row.Clear();
+									curr = 0;
+									for (idx_t l = 0; l < LF.RowSize(j); ++l)
+										curr = row.InsertOrdered(curr, LF.Col(j, l), -LF.Val(j, l) * L.Val(j, Lt.Position(j)));
 								}
 							}
+							for (idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
+								row.Get(j) /= L.Val(k, 0);
+							row.Get(LF.get_ja(), LF.get_a());
+							row.Clear();
+							LF.FinalizeRow();
+							Lt.NextColumn();
 						}
 					}
-					//copy LFrows to LF
-					for(idx_t k = 0; k < BSize; ++k)
-					{
-						for(size_t m = 0; m < LFrows[k].size(); ++m)
-							LF.PushBack(LFrows[k][m].first,LFrows[k][m].second/L.Val(k,0));
-						LF.FinalizeRow();
-					}
-					LF.SortRows();
+					if( print ) std::cout << "Size: " << LF.Size() << " Nonzeroes: " << LF.Nonzeros() << std::endl;
 				}
-				if( print ) std::cout << "Compute Schur" << std::endl;
 				{//S = C - EU*LF;
+					if( print ) std::cout << "Compute Schur" << std::endl;
 					RowAccumulator<double> row(CSize);
 					for(idx_t k = BSize; k < A.Size(); ++k)
 					{
@@ -437,22 +414,25 @@ public:
 						for(idx_t j = 0; j < A.RowSize(iPk); ++j)
 						{
 							idx_t Pc = P[A.Col(iPk,j)];
-							if( Pc >= BSize ) 
+							if( Pc >= BSize )
 								row[Pc-BSize] = A.Val(iPk,j);
 						}
+						row.Sort();
 						//for k-th row of EU add all rows of LF (scaled by D) to row-accumulator
 						for(idx_t jt = 0; jt < EU.RowSize(k-BSize); ++jt)
 						{
 							idx_t j = EU.Col(k-BSize,jt);
-							for(idx_t lt = 0; lt < LF.RowSize(j); ++lt)
-								row[LF.Col(j,lt)] -= EU.Val(k-BSize,jt)*LF.Val(j,lt) / D[j];
+							idx_t curr = 0;
+							for (idx_t lt = 0; lt < LF.RowSize(j); ++lt)
+								curr = row.InsertOrdered(curr, LF.Col(j, lt), -EU.Val(k - BSize, jt) * LF.Val(j, lt) / D[j]);
 						}
 						//put row accumulator to S
 						row.Get(S.get_ja(),S.get_a());
-						S.FinalizeRow();
 						row.Clear();
+						S.FinalizeRow();
 					}
 					assert(S.Size() == CSize);
+					if( print ) std::cout << "Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
 				}
 			}
 			//setup next level system
@@ -488,27 +468,27 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		//the original matrix A was separated by multilevel algorithm to the following form
-		//     | B  F |
-		// A = |      |
-		//     | E  C |
-		// In order to apply solve phase on this matrix, we consider the matrix in following sense:
-		//     | I         0 | | B   0 | | I    B^{-1} F |
-		// A = |             | |       | |               | = L D U
-		//     | E B^{-1}  I | | 0   S | | 0           I |
-		// where S = C - E B^{-1} F
-		// consider the system
-		//  | B  F | | u |   | f |
-		//  |      | |   | = |   |
-		//  | E  C | | y |   | g |
-		// then solution is obtained by steps:
-		// 1) ~f = B^{-1} f
-		// 2) ~g = g - E ~f
-		// 3) y = S^{-1} ~g
-		// 4) u = ~f - B^{-1} F y
 		//bool print = GetParameters().Get<int>("verbosity") & 2 ? true : false;
 		if( Next )
 		{
+			//the original matrix A was separated by multilevel algorithm to the following form
+			//     | B  F |
+			// A = |      |
+			//     | E  C |
+			// In order to apply solve phase on this matrix, we consider the matrix in following sense:
+			//     | I         0 | | B   0 | | I    B^{-1} F |
+			// A = |             | |       | |               | = L D U
+			//     | E B^{-1}  I | | 0   S | | 0           I |
+			// where S = C - E B^{-1} F
+			// consider the system
+			//  | B  F | | u |   | f |
+			//  |      | |   | = |   |
+			//  | E  C | | y |   | g |
+			// then solution is obtained by steps:
+			// 1) ~f = B^{-1} f
+			// 2) ~g = g - E ~f
+			// 3) y = S^{-1} ~g
+			// 4) u = ~f - B^{-1} F y
 			for(idx_t k = 0; k < BSize; ++k) f[k] = b[iP[k]];
 			for(idx_t k = BSize; k < BSize+CSize; ++k) g[k-BSize] = b[iP[k]];
 			L.Solve(f);
@@ -518,7 +498,6 @@ public:
 			E.Multiply(-1,f,1,g);
 			Next->Solve(g,y);
 			for(idx_t k = BSize; k < BSize+CSize; ++k) x[iP[k]] = y[k-BSize];
-			//F.MultiplyTranspose(1,y,0,f);
 			F.Multiply(1,y,0,f);
 			L.Solve(f);
 			for(idx_t k = 0; k < BSize; ++k) f[k] /= D[k];
