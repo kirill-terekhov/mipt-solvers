@@ -69,6 +69,12 @@ public:
 	{
 		if (Contains(ind))
 			Get(ind) += val;
+		else if (first == EOL)
+		{
+			next[ind] = first;
+			first = ind;
+			value[ind] = val;
+		}
 		else
 		{
 			idx_t foll = curr;
@@ -80,6 +86,7 @@ public:
 			next[curr] = ind;
 			next[ind] = foll;
 			value[ind] = val;
+			if (first > curr) first = curr;
 		}
 		return ind;
 	}

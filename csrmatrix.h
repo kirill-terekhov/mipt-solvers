@@ -478,6 +478,32 @@ public:
 		}
 		return err == 0;
 	}
+	// this operation will erase all empty rows and change the size of the matrix accordingly
+	void RemoveEmptyRows()
+	{
+		ia.resize(std::unique(ia.begin(),ia.end())-ia.begin());
+	}
+	// remove all columns that don't satisfy ColMin <= j < ColMax
+	void ChopColumns(idx_t ColMin, idx_t ColMax)
+	{
+		idx_t jt = 0, iab = ia[0], kend = Size();
+		for(idx_t k = 0; k < kend; ++k)
+		{
+			for(idx_t j = iab; j < ia[k+1]; ++j)
+			{
+				if( ColMin <= ja[j] && ja[j] < ColMax )
+				{
+					ja[jt] = ja[j];
+					 a[jt] =  a[j];
+					++jt;
+				}
+			}
+			iab = ia[k+1];
+			ia[k+1] = jt;
+		}
+		ja.resize(jt);
+		a.resize(jt);
+	}
 	inline size_t Nonzeros() const {return a.size();}
 	inline idx_t Size() const {return (idx_t)(ia.size()-1);}
 	inline idx_t RowSize(idx_t i) const { idx_t k = i + 1;  return ia[k] - ia[i]; }

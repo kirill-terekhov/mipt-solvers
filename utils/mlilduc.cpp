@@ -1,19 +1,17 @@
 #include "bicgstab.h"
-#include "amg_ruge_stuben.h"
-#include "gauss_seidel.h"
-#include "ilduc.h"
+#include "mlilduc.h"
+
+const double tol = 1.0e-7;
+const int maxits = 10000;
+
+
+
+
 
 int main(int argc, char ** argv)
 {
-
-	BICGSTAB< AMGRugeStuben< GaussSeidel, BICGSTAB<ILDUC> > > Solver;
-
-	if (argc < 2)
-	{
-		std::cout << argv[0] << " matrix.mtx [rhs.mtx] [sol.mtx]" << std::endl;
-		Solver.GetParameters().Save("params_default.txt");
-		Solver.GetParameters().SaveRaw("params_default.raw");
-	}
+	if( argc < 3 )
+		std::cout << argv[0] << " matrix.mtx rhs.mtx [sol.mtx]" << std::endl;
 	else
 	{
 		CSRMatrix A;
@@ -38,12 +36,25 @@ int main(int argc, char ** argv)
 				LoadVector(std::string(argv[3]),x);
 		}
 		
+		BICGSTAB< MLILDUC > Solver;
 		
-		
-		Solver.GetParameters().Load("params.txt");
+		Solver.GetParameters().Save("params_default.txt");
+		Solver.GetParameters().SaveRaw("params_default.raw");
+		std::cout << "Loading params_mlilduc.txt" << std::endl;
+		Solver.GetParameters().Load("params_mlilduc.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		Solver.GetParameters().Print();
-		if( Solver.Setup(A) && Solver.Solve(b,x) )
+		bool success;
+		
+		
+		
+		success = Solver.Setup(A);
+		
+		
+		if( success )
+			success = Solver.Solve(b,x);
+		
+		if( success )
 		{
 			std::cout << "Final residual " << Resid(A,b,x) << std::endl;
 			SaveVector(std::string("solution"),x);
