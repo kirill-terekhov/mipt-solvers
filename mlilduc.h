@@ -1,3 +1,4 @@
+
 #ifndef _ILDUC_H
 #define _ILDUC_H
 
@@ -244,14 +245,14 @@ public:
 			//reorder system
 			{
 				idx_t id = 0;
-				if( print ) std::cout << "Compute ordering, P and iP" << std::endl;
-				for(idx_t k = 0; k < A.Size(); ++k) if(!pivot[k] ) P[k] = id++;
+				if (print) std::cout << "Compute ordering, P and iP" << std::endl;
+				for (idx_t k = 0; k < A.Size(); ++k) if (!pivot[k]) P[k] = id++;
 				assert(id == BSize);
-				for(idx_t k = 0; k < A.Size(); ++k) if( pivot[k] ) P[k] = id++;
+				for (idx_t k = 0; k < A.Size(); ++k) if (pivot[k]) P[k] = id++;
 				assert(id == A.Size());
 				iP.resize(A.Size());
-				for(idx_t k = 0; k < A.Size(); ++k) iP[P[k]] = k;
-				
+				for (idx_t k = 0; k < A.Size(); ++k) iP[P[k]] = k;
+
 				if (print) std::cout << "reorder L" << std::endl;
 				//reorder L
 				{
@@ -259,14 +260,14 @@ public:
 					L.RemoveEmptyRows();
 					assert(L.Size() == BSize);
 					//change column indices
-					for(idx_t k = 0; k < L.Size(); ++k)
+					for (idx_t k = 0; k < L.Size(); ++k)
 					{
-						for(idx_t j = 0; j < L.RowSize(k); ++j)
-							L.Col(k,j) = P[L.Col(k,j)];
+						for (idx_t j = 0; j < L.RowSize(k); ++j)
+							L.Col(k, j) = P[L.Col(k, j)];
 					}
 					L.SortRows(); //TODO: maybe only move diagonal
 					//filter out entries that are outside range
-					L.ChopColumns(0,BSize);
+					L.ChopColumns(0, BSize);
 				}
 				if (print) std::cout << "reorder U" << std::endl;
 				//reorder U
@@ -275,26 +276,29 @@ public:
 					U.RemoveEmptyRows();
 					assert(U.Size() == BSize);
 					//change row indices
-					for(idx_t k = 0; k < U.Size(); ++k)
+					for (idx_t k = 0; k < U.Size(); ++k)
 					{
-						for(idx_t j = 0; j < U.RowSize(k); ++j)
-							U.Col(k,j) = P[U.Col(k,j)];
+						for (idx_t j = 0; j < U.RowSize(k); ++j)
+							U.Col(k, j) = P[U.Col(k, j)];
 					}
 					U.SortRows(); //TODO: maybe only move diagonal
 					//filter out entries that are outside range
-					U.ChopColumns(0,BSize);
+					U.ChopColumns(0, BSize);
 				}
-				if( print ) std::cout << "reorder D" << std::endl;
+				if (print) std::cout << "reorder D" << std::endl;
 				//reorder D
 				{
 					//compress D
 					idx_t id = 0;
-					for(idx_t k = 0; k < A.Size(); ++k) 
-						if( !pivot[k] )
+					for (idx_t k = 0; k < A.Size(); ++k)
+						if (!pivot[k])
 							D[id++] = D[k];
 					assert(id == BSize);
 					D.resize(id);
 				}
+			}
+			//Extract blocks E,F
+			{
 				if( print ) std::cout << "assemble blocks" << std::endl;
 				{
 					/*
@@ -336,10 +340,11 @@ public:
 					}
 				}
 			}
-			//compute Schur, S-version
+			//compute Schur, T-version
 			{
-				CSRMatrix EU, LF;
-				{ //compute EU
+				CSRMatrix P, R;
+				{ //compute R = (-EU^{-1}D^{-1}L^{-1} & I)
+					CSRMatrix EU;
 					if( print ) std::cout << "solve for EU^{-1}" << std::endl;
 					{
 						RowAccumulator<double> row(BSize);
@@ -370,9 +375,15 @@ public:
 						}
 						assert(EU.Size() == CSize);
 					}
-					if( print ) std::cout << "Size: " << EU.Size() << " Nonzeroes: " << EU.Nonzeros() << std::endl;
+					if (print) std::cout << "Size: " << EU.Size() << " Nonzeroes: " << EU.Nonzeros() << std::endl;
+					if (print) std::cout << "scale for EU^{-1}D^{-1}" << std::endl;
+
+
+					if (print) std::cout << "solve for EU^{-1}D^{-1}L^{-1}" << std::endl;
+					
 				}
-				{ //compute LF
+				{ //compute P = (-U^{-1} D^{-1} L^{-1} F \\ I)
+					CSRMatrix LF;
 					if( print ) std::cout << "solve for L^{-1}F" << std::endl;
 					//eliminate rows of LF by L column
 					{
@@ -402,36 +413,33 @@ public:
 							Lt.NextColumn();
 						}
 					}
-					if( print ) std::cout << "Size: " << LF.Size() << " Nonzeroes: " << LF.Nonzeros() << std::endl;
+					if (print) std::cout << "Size: " << LF.Size() << " Nonzeroes: " << LF.Nonzeros() << std::endl;
+					if (print) std::cout << "scale for D^{-1}L^{-1}F" << std::endl;
+
+					if (print) std::cout << "solve for U^{-1}D^{-1}L^{-1}F" << std::endl;
+
 				}
-				{//S = C - EU*LF;
-					if( print ) std::cout << "Compute Schur" << std::endl;
-					RowAccumulator<double> row(CSize);
-					for(idx_t k = BSize; k < A.Size(); ++k)
-					{
-						//first assemble C (lower-right block) into row accumulator
-						idx_t iPk = iP[k];
-						for(idx_t j = 0; j < A.RowSize(iPk); ++j)
+				{//compute S = R B P, B - reordered 
+					CSRMatrix B;
+					if (print) std::cout << "Assemble B - reordered A" << std::endl;
+					{//assemble B - reordered matrix in row-major format
+						for (idx_t k = 0; k < A.Size(); ++k)
 						{
-							idx_t Pc = P[A.Col(iPk,j)];
-							if( Pc >= BSize )
-								row[Pc-BSize] = A.Val(iPk,j);
+							idx_t iPk = iP[k];
+							for (idx_t j = 0; j < A.RowSize(iPk); ++j)
+							{
+								idx_t Pc = P[A.Col(iPk, j)];
+								B.PushBack(Pc - BSize, A.Val(iPk, j));
+							}
+							B.FinalizeRow();
 						}
-						row.Sort();
-						//for k-th row of EU add all rows of LF (scaled by D) to row-accumulator
-						for(idx_t jt = 0; jt < EU.RowSize(k-BSize); ++jt)
-						{
-							idx_t j = EU.Col(k-BSize,jt);
-							idx_t curr = 0;
-							for (idx_t lt = 0; lt < LF.RowSize(j); ++lt)
-								curr = row.InsertOrdered(curr, LF.Col(j, lt), -EU.Val(k - BSize, jt) * LF.Val(j, lt) / D[j]);
-						}
-						//put row accumulator to S
-						row.Get(S.get_ja(),S.get_a());
-						row.Clear();
-						S.FinalizeRow();
+						B.SortRows();
 					}
+					//compute Schur
+					if (print) std::cout << "Compute Schur" << std::endl;
+					S = P * B * R;
 					assert(S.Size() == CSize);
+
 					if( print ) std::cout << "Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
 				}
 			}
