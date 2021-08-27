@@ -1,5 +1,5 @@
 # mipt-solvers
-Supplimentary material for MIPT course "Practical methods for system solutions"
+Supplementary material for MIPT course "Practical methods for system solutions"
 
 Contents in branches:
 * lect0 - symmetric matrices
