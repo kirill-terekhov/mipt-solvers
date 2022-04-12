@@ -4,6 +4,9 @@ project(lect6)
 
 add_library(lect6 INTERFACE)
 add_executable(MLILDUC        utils/mlilduc.cpp)
+add_executable(SYM_MLILDUC    utils/sym_mlilduc.cpp)
+add_executable(MPT_MLILDUC    utils/mpt_mlilduc.cpp)
+add_executable(SINK_MLILDUC   utils/sink_mlilduc.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 

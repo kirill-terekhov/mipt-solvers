@@ -1,5 +1,6 @@
 #include "bicgstab.h"
 #include "mlilduc.h"
+#include "maximal_transversal.h"
 
 int main(int argc, char ** argv)
 {
@@ -29,8 +30,8 @@ int main(int argc, char ** argv)
 				LoadVector(std::string(argv[3]),x);
 		}
 		
-		BICGSTAB< DummyPreprocessor< MLILDUC<DummyPreprocessor> > > Solver;
-				
+		BICGSTAB< MaximalTransversal< MLILDUC<MaximalTransversal> > > Solver;
+		
 		Solver.GetParameters().Save("params_default.txt");
 		Solver.GetParameters().SaveRaw("params_default.raw");
 		std::cout << "Loading params_mlilduc.txt" << std::endl;

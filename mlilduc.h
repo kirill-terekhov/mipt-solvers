@@ -20,7 +20,7 @@
  * by M.Bollhoefer, Y. Saad
  */
  
-
+template< template<class> class Preprocessor >
 class MLILDUC : public Methods
 {
 	CSRTriangular L, U; ///< factors
@@ -35,16 +35,17 @@ public:
 	{
 		Parameters ret;
 		ret.Set("name","MLILDUC");
-		ret.Set("drop_tolerance",0.1);
+		ret.Set("drop_tolerance",0.01);
 		ret.Set("diagonal_tolerance",1.0e-7);
 		ret.Set("diagonal_perturbation",1.0e-9);
-		ret.Set("pivot_condition",1.15);
+		ret.Set("pivot_condition",2.5);
 		ret.Set("write_matrix",0);
 		ret.Set("verbosity",1);
 		ret.Set("inverse_estimation",1);
 		ret.Set("premature_dropping",1);
 		ret.Set("check",0);
 		ret.Set("level","*");
+		ret.SubParameters("Preprocessor") = Preprocessor<DummySolver>::DefaultParameters();
 		return ret;
 	}
 	MLILDUC() : L(CSRTriangular::LowerCSC), U(CSRTriangular::UpperCSR), Next(NULL) {GetParameters() = DefaultParameters();}
@@ -437,12 +438,14 @@ public:
 			}
 			//setup next level system
 			if( print ) std::cout << "Setup next level" << std::endl;
-			Next = new MLILDUC();
+			Next = new Preprocessor<MLILDUC>();
 			Next->GetParameters() = GetParameters();
+			Next->GetParameters() = GetParameters().SubParameters("Preprocessor");
+			Next->GetParameters().SubParametersSearchRecursive("Solver", "name", "DummySolver") = GetParameters();
 			Next->GetParameters().SetRecursive("level",level+1);
 			success = Next->Setup(S);
 			//allocate vectors
-			if( print ) std::cout << "Allocate vectors" << std::endl;
+			//if( print ) std::cout << "Allocate vectors" << std::endl;
 			f.resize(BSize);
 			g.resize(CSize);
 			y.resize(CSize);
