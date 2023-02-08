@@ -42,8 +42,8 @@ int main(int argc, char** argv)
 		int Np = N * M;
 		//shift in matrix
 		int Su = 0, Sv = Nu, Sp = Nu + Nv;
-		double hx = 1.0 / (double)N;
-		double hy = 1.0 / (double)M;
+		double hx = 1.0 / (double)N, hx2 = hx * hx;
+		double hy = 1.0 / (double)M, hy2 = hy * hy;
 		std::vector<int> ia(1, 0), ja;
 		std::vector<double> a, b(Nu + Nv + Np, 0.0);
 #define Iu(i,j) (Su + (i)*M + (j))
@@ -69,35 +69,35 @@ int main(int argc, char** argv)
 					//left
 					// mu * (u(i,j) - u(i-1,j)) / hx
 					ja.push_back(Iu(i - 1, j));
-					a.push_back(-mu / hx);
-					a[ijpos] += mu / hx;
+					a.push_back(-mu / hx2);
+					a[ijpos] += mu / hx2;
 					//bottom 
 					if (j == 0) //slip condition at bottom: mu * (u(i,j) - 0.0) / (0.5 * hy)
-						a[ijpos] += mu / (0.5 * hy);
+						a[ijpos] += mu / (0.5 * hy2);
 					else 
 					{
 						// mu * (u(i,j) - u(i,j-1)) / hy
 						ja.push_back(Iu(i, j - 1));
-						a.push_back(-mu / hy);
-						a[ijpos] += mu / hy;
+						a.push_back(-mu / hy2);
+						a[ijpos] += mu / hy2;
 					}
 					//top
 					if (j == M - 1) //slip condition at top: mu * (u(i,j) - 0.0) / (0.5 * hy)
-						a[ijpos] += mu / (0.5 * hy);
+						a[ijpos] += mu / (0.5 * hy2);
 					else
 					{
 						// mu * (u(i,j) - u(i,j+1)) / hy
 						ja.push_back(Iu(i, j + 1));
-						a.push_back(-mu / hy);
-						a[ijpos] += mu / hy;
+						a.push_back(-mu / hy2);
+						a[ijpos] += mu / hy2;
 					}
 					//right
 					if (i < N) //outflow to the right at i == N
 					{
 						// mu * (u(i,j) - u(i+1,j)) / hx
 						ja.push_back(Iu(i + 1, j));
-						a.push_back(-mu / hx);
-						a[ijpos] += mu / hx;
+						a.push_back(-mu / hx2);
+						a[ijpos] += mu / hx2;
 					}
 					if (i == N)//outflow with zero p at right
 					{
@@ -138,31 +138,31 @@ int main(int argc, char** argv)
 				{
 					//left
 					if (i == 0) //zero vertical at left: mu * (v(i,j) - 0.0) / (0.5*hx)
-						a[ijpos] += mu / (0.5 * hx);
+						a[ijpos] += mu / (0.5 * hx2);
 					else
 					{
 						// mu * (v(i,j) - v(i-1,j)) / hx
 						ja.push_back(Iv(i - 1, j));
-						a.push_back(-mu / hx);
-						a[ijpos] += mu / hx;
+						a.push_back(-mu / hx2);
+						a[ijpos] += mu / hx2;
 					}
 					//bottom
 					// mu * (v(i,j) - v(i, j-1)) / hy
 					ja.push_back(Iv(i, j - 1));
-					a.push_back(-mu / hy);
-					a[ijpos] += mu / hy;
+					a.push_back(-mu / hy2);
+					a[ijpos] += mu / hy2;
 					//top
 					// mu * (v(i,j) - v(i, j+1)) / hy
 					ja.push_back(Iv(i, j + 1));
-					a.push_back(-mu / hy);
-					a[ijpos] += mu / hy;
+					a.push_back(-mu / hy2);
+					a[ijpos] += mu / hy2;
 					//right
 					if (i < N - 1) //outflow to the right at i == N
 					{
 						// mu * (v(i,j) - v(i+1,j)) / hx
 						ja.push_back(Iv(i + 1, j));
-						a.push_back(-mu / hx);
-						a[ijpos] += mu / hx;
+						a.push_back(-mu / hx2);
+						a[ijpos] += mu / hx2;
 					}
 					// (p(i,j) - p(i,j-1)) / hy
 					//pressure from the top
