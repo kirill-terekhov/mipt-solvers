@@ -2,7 +2,7 @@
 Supplementary material for MIPT course "Practical methods for system solutions"
 
 Contents in branches:
-* lect0 - symmetric matrices
+* lect0 - symmetric matrices and matrix generators
 * lect1 - preconditioned conjugate gradient with polynomial Chebyshev preconditioner
 * lect2 - inverse-based incomplete Crout factorization preconditioner
 * lect3 - simple 1D geometric multigrid with Gauss-Seidel smoother
