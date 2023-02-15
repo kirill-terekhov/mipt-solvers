@@ -33,8 +33,8 @@ public:
 		ret.Set("diagonal_perturbation",0.0);
 		ret.Set("write_matrix",0);
 		ret.Set("verbosity",1);
-		ret.Set("inverse_estimation",0);
-		ret.Set("premature_dropping",1);
+		ret.Set("inverse_estimation",1);
+		ret.Set("premature_dropping",0);
 		ret.Set("check",0);
 		return ret;
 	}
