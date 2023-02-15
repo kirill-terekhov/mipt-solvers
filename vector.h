@@ -78,6 +78,16 @@ void SaveVector(std::string file, const std::vector<idx_t> & v)
 	output.close();
 }
 
+template<typename vtype>
+void SaveVector(std::string file, const std::vector<vtype>& v)
+{
+	std::ofstream output(file.c_str());
+	output << v.size() << std::endl;
+	for (idx_t i = 0; i < (idx_t)v.size(); ++i)
+		output << v[i] << std::endl;
+	output.close();
+}
+
 
 INLINE double Dot(const std::vector<double> & x, const std::vector<double> & y)
 {
