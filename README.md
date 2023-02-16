@@ -10,5 +10,4 @@ Contents in branches:
 * lect5 - Ruge-Stuben algebraic multigrid with symmetric Gauss-Seidel or Jacobi smoothers
 * lect6 - S-version of multi-level inverse-based incomplete Crout factorization
 * lect7 - M-version of multi-level inverse-based incomplete Crout factorization (under construction)
-* lect8 - Rescaling in multi-level method: maximal transversal, sinkhorn scaling, symmetric scaling
-
+* lect8 - Rescaling and reordering in ILU method: maximal transversal, sinkhorn scaling, symmetric scaling, weighted reverse-cuthill mckee, nested dissection using metis (later move after lect2)
