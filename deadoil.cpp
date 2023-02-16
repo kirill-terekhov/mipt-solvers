@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <cmath>
+#include <cmath>>
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
@@ -114,7 +114,16 @@ int main(int argc, char** argv)
 								b[bpos] += kr * u;
 							}
 						}
-				if (i == N / 2 && j == M / 2) //add production well with bottom hole pressure 10 [bhp]
+				if (i == 0 && j == 0 && q == 0) //add water injection well with bottom hole pressure 150 [bhp]
+				{
+					// WI * (p - 10)
+					u = WI * dt * (p(i, j) - 150);
+					kr = 1;
+					a[ijpos] += kr * WI * dt;
+					b[bpos] += kr * u;
+					std::cout << "well at " << i << " " << j << " WI " << WI << " kr " << kr << " add " << kr * WI * dt << std::endl;
+				}
+				if (i == N-1 && j == M-1) //add production well with bottom hole pressure 10 [bhp]
 				{
 					// WI * (p - 10)
 					u = WI * dt * (p(i, j) - 10);
@@ -126,12 +135,13 @@ int main(int argc, char** argv)
 					}
 					else if (u) //downstream
 					{
+						std::cout << "downstream in well: " << u << std::endl;
 						skr = 1 - q + (2 * q - 1) * s0(i, j); //water: 1-s, oil: s
 						kr = pow(skr, 2);
 					}
 					a[ijpos] += kr * WI * dt;
 					b[bpos] += kr * u;
-					std::cout << "well at " << i << " " << j << " WI " << WI << " kr " << kr << std::endl;
+					std::cout << "well at " << i << " " << j << " WI " << WI << " kr " << kr << " add " << kr * WI * dt << std::endl;
 				}
 				ia.push_back((int)ja.size()); //close row
 			}
