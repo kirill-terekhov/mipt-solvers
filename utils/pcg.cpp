@@ -43,6 +43,9 @@ int main(int argc, char ** argv)
 		Solver.GetParameters().Print();
 		if( Solver.Setup(A) && Solver.Solve(b,x) )
 		{
+			std::cout << "Solver consumed: " << Solver.Bytes() / 1024  << " KB" << std::endl;
+			std::cout << "Matrix consumed: " << A.Bytes() / 1024 << " KB" << std::endl;
+			std::cout << "Vector consumed: " << get_bytes(b) / 1024 << " KB" << std::endl;
 			std::cout << "Final residual " << Resid(A,b,x) << std::endl;
 			SaveVector(std::string("solution"),x);
 			return 0;
