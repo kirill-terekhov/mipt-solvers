@@ -6,9 +6,11 @@ add_library(lect5 INTERFACE)
 add_executable(PCG_AMG_CHEB        utils/pcg_amg_cheb.cpp)
 add_executable(PCG_AMG_GS          utils/pcg_amg_gs.cpp)
 add_executable(PCG_AMG_JAC         utils/pcg_amg_jac.cpp)
+add_executable(PCG_AMG_ILDUC       utils/pcg_amg_ilduc.cpp)
 add_executable(BICGSTAB_AMG_CHEB   utils/bicgstab_amg_cheb.cpp)
 add_executable(BICGSTAB_AMG_GS     utils/bicgstab_amg_gs.cpp)
 add_executable(BICGSTAB_AMG_JAC    utils/bicgstab_amg_jac.cpp)
+add_executable(BICGSTAB_AMG_ILDUC  utils/bicgstab_amg_ilduc.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
