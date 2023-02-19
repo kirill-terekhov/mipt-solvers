@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <cmath>
 
 
 template<typename KeyType>
@@ -225,6 +226,24 @@ public:
 		}
 		return ret;
 	}
+	CSRMatrixType operator +(const CSRMatrixType& B) const
+	{
+		const CSRMatrixType& A = *this;
+		//number of columns may be different, i.e. one matrix is singular
+		idx_t ColsA = A.Columns(), ColsB = B.Columns();
+		if (A.Size() != B.Size()) throw "Wrong argument size";
+		CSRMatrixType ret;
+		RowAccumulator<KeyType> List(std::max(ColsA, ColsB));
+		for (idx_t i = 0; i < A.Size(); ++i)
+		{
+			List.Add(A.ia[i], A.ia[i + 1], A.ja, A.a, 1.0);
+			List.Add(B.ia[i], B.ia[i + 1], B.ja, B.a, 1.0);
+			List.Get(ret.get_ja(), ret.get_a());
+			ret.FinalizeRow();
+			List.Clear();
+		}
+		return ret;
+	}
 	CSRMatrixType Transpose(bool square = false) const
 	{
 		idx_t Cols = Columns(square);
@@ -394,10 +413,20 @@ public:
 				}
 			}
 		}
-		std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
+		//std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
 		if( normm < eps*eps*normp )
 			return true;
 		return false;
+	}
+	double FrobeniusNorm() const
+	{
+		double ret = 0;
+		for (idx_t k = 0; k < Size(); ++k)
+		{
+			for (idx_t l = 0; l < RowSize(k); ++l)
+				ret += pow(Val(k, l), 2);
+		}
+		return sqrt(ret);
 	}
 	bool Compare(CSRMatrixType const & b, double eps = 1.0e-7) const
 	{
