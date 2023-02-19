@@ -63,6 +63,7 @@ public:
 		double dtol         = GetParameters().Get<double>("diagonal_tolerance");
 		int    level        = GetParameters().Get<int>("level");
 		int    minsize      = GetParameters().Get<int>("minimal_size");
+		int dropsL = 0, dropsU = 0;
 		std::vector<bool> pivot(Ain.Size(),false);
 		idx_t swaps = 0;
 		{
@@ -89,6 +90,7 @@ public:
 						std::cout << " L " << std::setw(12) << iLnorm;
 						std::cout << " D " << std::setw(12) << Dmax/Dmin;
 						std::cout << " U " << std::setw(12) << iUnorm;
+						std::cout << " drops " << std::setw(6) << dropsL + dropsU;
 						std::cout << " swaps " << std::setw(6) << swaps;
 						std::cout << "\r";
 						std::cout.flush();
@@ -166,7 +168,7 @@ public:
 							if( invest || print )
 							{
 								iUest.Update(u,k);
-								if( invest ) unorm /= iUnorm;
+								if( invest ) unorm /= std::max(iLnorm, iUnorm);
 							}
 							//assemble row of U
 							U.PushBack(k,u.Get(k));
@@ -174,6 +176,7 @@ public:
 							{
 								double v = u.Get(j);
 								if( std::fabs(v) > tau*unorm ) U.PushBack(j,v);
+								else dropsU++;
 							}
 						}
 						//Assemble L-part
@@ -191,7 +194,7 @@ public:
 							if( invest || print )
 							{
 								iLest.Update(l,k);
-								if( invest ) lnorm /= iLnorm;
+								if( invest ) lnorm /= std::max(iLnorm, iUnorm);
 							}
 							//assemble row of U
 							L.PushBack(k,l.Get(k));
@@ -199,6 +202,7 @@ public:
 							{
 								double v = l.Get(j);
 								if( std::fabs(v) > tau*lnorm ) L.PushBack(j,v);
+								else dropsL++;
 							}
 						}
 					}
@@ -233,6 +237,7 @@ public:
 				bytes += iUest.Bytes() + iLest.Bytes();
 				std::cout << "      consumed in factorization " << bytes/1024.0/1024.0 << "Mb " << std::endl;
 				std::cout << "      fill-in LU: " << (L.Nonzeros() + U.Nonzeros())/(1.0*A.Nonzeros()) << std::endl;
+				std::cout << "      drops: " << dropsL + dropsU << " U: " << dropsU << " L: " << dropsL << std::endl;
 				std::cout << "      estimated inverse norms L " << iLnorm << " D " << Dmax/Dmin << " U " << iUnorm << std::endl;
 				std::cout << "      swaps " << swaps << std::endl;
 				std::cout << "      symmetric A? " << (A.Symmetric() ? "yes" : "no") << std::endl;
