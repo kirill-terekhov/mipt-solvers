@@ -1,6 +1,5 @@
-#include "pcg.h"
-#include "mlilduc.h"
-#include "symmetric_scaling.h"
+#include "bicgstab.h"
+#include "mlilducS.h"
 
 int main(int argc, char ** argv)
 {
@@ -30,8 +29,8 @@ int main(int argc, char ** argv)
 				LoadVector(std::string(argv[3]),x);
 		}
 		
-		PCG< SymmetricScaling< MLILDUC<SymmetricScaling> > > Solver;
-		
+		BICGSTAB< MLILDUC<DummyPreprocessor> > Solver;
+				
 		Solver.GetParameters().Save("params_default.txt");
 		Solver.GetParameters().SaveRaw("params_default.raw");
 		std::cout << "Loading params_mlilduc.txt" << std::endl;

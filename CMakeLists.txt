@@ -15,11 +15,10 @@ add_executable(MPT_WRCM_ILDUC  utils/mpt_wrcm_ilduc.cpp)
 
 
 #after multilevel lect!
-#add_executable(MLILDUC            utils/mlilduc.cpp)
-#add_executable(SYM_MLILDUC        utils/sym_mlilduc.cpp)
-#add_executable(MPT_MLILDUC        utils/mpt_mlilduc.cpp)
-#add_executable(SINK_MLILDUC       utils/sink_mlilduc.cpp)
-#add_executable(MPT_WRCM_MLILDUC       utils/mpt_wrcm_mlilduc.cpp)
+add_executable(MLILDUCS            utils/mlilducS.cpp)
+add_executable(MLILDUCT            utils/mlilducT.cpp)
+add_executable(MPT_WRCM_MLILDUCS   utils/mpt_wrcm_mlilducS.cpp)
+add_executable(MPT_WRCM_MLILDUCT   utils/mpt_wrcm_mlilducT.cpp)
 
 
 if(USE_METIS)
@@ -90,10 +89,8 @@ if(USE_METIS)
 
 	add_executable(ORDER  utils/order.cpp)
 	add_executable(MPT_METIS_ILDUC  utils/mpt_metis_ilduc.cpp)
-	#add_executable(MPT_METIS_MLILDUC  utils/mpt_metis_mlilduc.cpp)
 	target_link_libraries(ORDER PUBLIC ${METIS_LIBRARIES})
 	target_link_libraries(MPT_METIS_ILDUC PUBLIC ${METIS_LIBRARIES})
-	#target_link_libraries(MPT_METIS_MLILDUC PUBLIC ${METIS_LIBRARIES})
 endif(USE_METIS)
 
 include_directories(${PROJECT_SOURCE_DIR})

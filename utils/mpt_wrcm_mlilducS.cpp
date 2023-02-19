@@ -1,6 +1,38 @@
 #include "bicgstab.h"
-#include "mlilduc.h"
-#include "sinkhorn_scaling.h"
+#include "mlilducS.h"
+#include "maximal_transversal.h"
+#include "wrcm.h"
+
+
+template<typename T>
+class MPTWRCM : public Methods
+{
+	MaximalTransversal< WeightedReverseCuthillMckee< T > > method;
+public:
+	static Parameters DefaultParameters()
+	{
+		Parameters ret;
+		ret.Set("name", "MPTWRCM");
+		ret.SubParameters("MPT") = MaximalTransversal<DummySolver>::DefaultParameters();
+		ret.SubParameters("WRCM") = WeightedReverseCuthillMckee<DummySolver>::DefaultParameters();
+		ret.SubParameters("Solver") = T::DefaultParameters();
+		return ret;
+	}
+	MPTWRCM() { GetParameters() = DefaultParameters(); }
+	bool Setup(const CSRMatrix& A)
+	{
+		method.GetParameters() = GetParameters().SubParameters("MPT");
+		method.GetParameters().SubParameters("Solver") = GetParameters().SubParameters("WRCM");
+		method.GetParameters().SubParameters("Solver").SubParameters("Solver") = GetParameters().SubParameters("Solver");
+		return method.Setup(A);
+	}
+	bool Solve(const std::vector<double>& b, std::vector<double>& x) const
+	{
+		return method.Solve(b, x);
+	}
+	size_t Bytes() const { return method.Bytes(); }
+};
+
 
 int main(int argc, char ** argv)
 {
@@ -30,7 +62,7 @@ int main(int argc, char ** argv)
 				LoadVector(std::string(argv[3]),x);
 		}
 		
-		BICGSTAB< SinkhornScaling< MLILDUC<SinkhornScaling> > > Solver;
+		BICGSTAB< MPTWRCM< MLILDUC< MPTWRCM > > > Solver;
 		
 		Solver.GetParameters().Save("params_default.txt");
 		Solver.GetParameters().SaveRaw("params_default.raw");
