@@ -14,13 +14,6 @@ add_executable(SINK_ILDUC      utils/sink_ilduc.cpp)
 add_executable(MPT_WRCM_ILDUC  utils/mpt_wrcm_ilduc.cpp)
 
 
-#after multilevel lect!
-add_executable(MLILDUCS            utils/mlilducS.cpp)
-add_executable(MLILDUCT            utils/mlilducT.cpp)
-add_executable(MPT_WRCM_MLILDUCS   utils/mpt_wrcm_mlilducS.cpp)
-add_executable(MPT_WRCM_MLILDUCT   utils/mpt_wrcm_mlilducT.cpp)
-
-
 if(USE_METIS)
 	set(LIB_DOWNLOAD_PATH "${CMAKE_BINARY_DIR}/Libraries/download")
 	include(ExternalProject)
