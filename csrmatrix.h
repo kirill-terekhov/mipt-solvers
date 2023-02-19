@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <cmath>
 
 
 template<typename KeyType>
@@ -394,7 +395,7 @@ public:
 				}
 			}
 		}
-		std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
+		//std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
 		if( normm < eps*eps*normp )
 			return true;
 		return false;
@@ -503,6 +504,16 @@ public:
 		}
 		ja.resize(jt);
 		a.resize(jt);
+	}
+	double FrobeniusNorm()
+	{
+		double ret = 0.0;
+		for (idx_t i = 0; i < Size(); ++i) 
+		{
+			for (idx_t k = ia[i]; k < ia[i + 1]; ++k)
+				ret += pow(a[k], 2);
+		}
+		return sqrt(ret);
 	}
 	inline size_t Nonzeros() const {return a.size();}
 	inline idx_t Size() const {return (idx_t)(ia.size()-1);}

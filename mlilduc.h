@@ -62,6 +62,7 @@ public:
 		double pert = GetParameters().Get<double>("diagonal_perturbation");
 		double dtol = GetParameters().Get<double>("diagonal_tolerance");
 		int    level        = GetParameters().Get<int>("level");
+		int dropsL = 0, dropsU = 0;
 		std::vector<bool> pivot(Ain.Size(),false);
 		idx_t swaps = 0;
 		{
@@ -88,6 +89,7 @@ public:
 						std::cout << " L " << std::setw(12) << iLnorm;
 						std::cout << " D " << std::setw(12) << Dmax/Dmin;
 						std::cout << " U " << std::setw(12) << iUnorm;
+						std::cout << " drops " << std::setw(6) << dropsL + dropsU;
 						std::cout << " swaps " << std::setw(6) << swaps;
 						std::cout << "\r";
 						std::cout.flush();
@@ -165,14 +167,15 @@ public:
 							if( invest || print )
 							{
 								iUest.Update(u,k);
-								if( invest ) unorm /= iUnorm;
+								if (invest) unorm /= std::max(iLnorm, iUnorm);
 							}
 							//assemble row of U
 							U.PushBack(k,u.Get(k));
 							for(idx_t j = u.Next(u.Begin()); j != u.End(); j = u.Next(j))
 							{
 								double v = u.Get(j);
-								if( std::fabs(v) > tau*unorm ) U.PushBack(j,v);
+								if (std::fabs(v) > tau * unorm) U.PushBack(j, v);
+								else dropsU++;
 							}
 						}
 						//Assemble L-part
@@ -190,14 +193,15 @@ public:
 							if( invest || print )
 							{
 								iLest.Update(l,k);
-								if( invest ) lnorm /= iLnorm;
+								if (invest) lnorm /= std::max(iLnorm, iUnorm);
 							}
 							//assemble row of U
 							L.PushBack(k,l.Get(k));
 							for(idx_t j = l.Next(l.Begin()); j != l.End(); j = l.Next(j))
 							{
 								double v = l.Get(j);
-								if( std::fabs(v) > tau*lnorm ) L.PushBack(j,v);
+								if (std::fabs(v) > tau * lnorm) L.PushBack(j, v);
+								else dropsL++;
 							}
 						}
 					}
@@ -232,8 +236,10 @@ public:
 				bytes += iUest.Bytes() + iLest.Bytes();
 				std::cout << "      consumed in factorization " << bytes/1024.0/1024.0 << "Mb " << std::endl;
 				std::cout << "      fill-in LU: " << (L.Nonzeros() + U.Nonzeros())/(1.0*A.Nonzeros()) << std::endl;
+				std::cout << "      drops: " << dropsL + dropsU << " U: " << dropsU << " L: " << dropsL << std::endl;
 				std::cout << "      estimated inverse norms L " << iLnorm << " D " << Dmax/Dmin << " U " << iUnorm << std::endl;
 				std::cout << "      swaps " << swaps << std::endl;
+				std::cout << "      symmetric A? " << (A.Symmetric() ? "yes" : "no") << std::endl;
 			}
 		}
 		bool success = true;
@@ -285,6 +291,7 @@ public:
 					//filter out entries that are outside range
 					U.ChopColumns(0, BSize);
 				}
+				//if (print) std::cout << "||L-U||: " << (L - U).FrobeniusNorm() << std::endl;
 				if (print) std::cout << "reorder D" << std::endl;
 				//reorder D
 				{
@@ -338,11 +345,12 @@ public:
 						}
 						E.SortRows();
 					}
+					//if (print) std::cout << "||F-E^T||: " << (F - E.Transpose()).FrobeniusNorm() << std::endl;
 				}
 			}
 			//compute Schur, T-version
 			{
-				CSRMatrix P, R;
+				CSRMatrix I, R;
 				{ //compute R = (-EU^{-1}D^{-1}L^{-1} & I)
 					CSRMatrix EU;
 					if( print ) std::cout << "solve for EU^{-1}" << std::endl;
@@ -352,8 +360,8 @@ public:
 						{
 							//unpack row of E
 							idx_t curr = 0;
-							for(idx_t j = 0; j < E.RowSize(k); ++j)
-								curr = row.InsertOrdered(curr,E.Col(k,j),E.Val(k,j)/U.Val(E.Col(k,j),0));
+							for (idx_t j = 0; j < E.RowSize(k); ++j)
+								curr = row.InsertOrdered(curr, E.Col(k, j), E.Val(k, j) / U.Val(E.Col(k, j), 0));
 							//elimination with U
 							for(idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
 							{
@@ -365,7 +373,7 @@ public:
 									for(idx_t l = 1; l < U.RowSize(j); ++l)
 									{
 										assert(U.Col(U.Col(j,l),0) == U.Col(j,l)); //diagonal goes first
-										curr = row.InsertOrdered(curr,U.Col(j,l),-row.Get(j)*U.Val(j,l)/U.Val(U.Col(j,l),0));
+										curr = row.InsertOrdered(curr, U.Col(j, l), -row.Get(j) * U.Val(j, l) / U.Val(U.Col(j, l), 0));
 									}
 								}
 							}
@@ -374,13 +382,63 @@ public:
 							EU.FinalizeRow();
 						}
 						assert(EU.Size() == CSize);
+						//EU.Save("EU.mtx");
 					}
 					if (print) std::cout << "Size: " << EU.Size() << " Nonzeroes: " << EU.Nonzeros() << std::endl;
+					//if (print) std::cout << "||(E * U^{-1}) * U - E||: " << (EU * U - E).FrobeniusNorm() << std::endl;
 					if (print) std::cout << "scale for EU^{-1}D^{-1}" << std::endl;
-
-
+					{
+						for (idx_t k = 0; k < CSize; ++k)
+						{
+							for (idx_t j = 0; j < EU.RowSize(k); ++j)
+								EU.Val(k, j) /= D[EU.Col(k, j)];
+						}
+					}
 					if (print) std::cout << "solve for EU^{-1}D^{-1}L^{-1}" << std::endl;
-					
+					{
+						RowAccumulator<double> row(BSize);
+						CSRMatrix Lt = L.Transpose(); //TODO
+						for (idx_t k = 0; k < CSize; ++k)
+						{
+							//unpack row of EU in reverse order
+							idx_t curr = 0;
+							for (idx_t ij = EU.RowSize(k); ij > 0; --ij)
+							{
+								idx_t j = ij - 1;
+								curr = row.InsertOrdered(curr, BSize - 1 - EU.Col(k, j), EU.Val(k, j) / L.Val(EU.Col(k, j), 0));
+							}
+							//elimination with L
+							for (idx_t ij = row.Begin(); ij != row.End(); ij = row.Next(ij))
+							{
+								if (1 + row.Get(ij) != 1)
+								{
+									idx_t j = BSize - 1 - ij; //reverse order for Lt
+									curr = ij;
+									assert(Lt.RowSize(j) != 0); //at least diagonal
+									assert(Lt.Col(j, Lt.RowSize(j)-1) == j); //diagonal goes last
+									for (idx_t il = Lt.RowSize(j) - 1; il > 0; --il) //start from last in iL
+									{
+										idx_t l = il - 1;
+										idx_t m = Lt.Col(j, l);
+										assert(Lt.Col(m, Lt.RowSize(m) - 1) == m); //diagonal goes last
+										curr = row.InsertOrdered(curr, BSize - 1 - m, -row.Get(ij) * Lt.Val(j, l) / Lt.Val(m, Lt.RowSize(m) - 1));
+									}
+								}
+							}
+							for (idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
+							{
+								I.get_ja().push_back(BSize - 1 - j); //restore order
+								I.get_a().push_back(-row.Get(j));
+							}
+							//add unit
+							I.get_ja().push_back(BSize + k);
+							I.get_a().push_back(1.0);
+							I.FinalizeRow();
+							row.Clear();
+						}
+						I.SortRows();
+					}
+					if (print) std::cout << "Interpolator Size: " << I.Size() << " Nonzeroes: " << I.Nonzeros() << std::endl;
 				}
 				{ //compute P = (-U^{-1} D^{-1} L^{-1} F \\ I)
 					CSRMatrix LF;
@@ -391,7 +449,7 @@ public:
 						RowAccumulator<double> row(CSize);
 						for (idx_t k = 0; k < BSize; ++k)
 						{
-							//fill LF row with F row
+							//fill row with F row
 							idx_t curr = 0;
 							for (idx_t j = 0; j < F.RowSize(k); ++j)
 								curr = row.InsertOrdered(curr, F.Col(k, j), F.Val(k, j));
@@ -414,12 +472,67 @@ public:
 						}
 					}
 					if (print) std::cout << "Size: " << LF.Size() << " Nonzeroes: " << LF.Nonzeros() << std::endl;
+					//if (print) std::cout << "||L * (L^{-1} * F) - F||: " << (L.Transpose() * LF - F).FrobeniusNorm() << std::endl;
 					if (print) std::cout << "scale for D^{-1}L^{-1}F" << std::endl;
-
+					{
+						for (idx_t k = 0; k < BSize; ++k)
+						{
+							for (idx_t j = 0; j < LF.RowSize(k); ++j)
+								LF.Val(k, j) /= D[k];
+						}
+					}
 					if (print) std::cout << "solve for U^{-1}D^{-1}L^{-1}F" << std::endl;
-
+					{
+						CSRMatrix iR; // BSize rows of P in reverse order
+						{
+							RowAccumulator<double> row(CSize);
+							for (idx_t ik = BSize; ik > 0; --ik) //backward traversal
+							{
+								idx_t k = ik - 1;
+								//fill with F row from end
+								idx_t curr = 0;
+								for (idx_t j = 0; j < LF.RowSize(k); ++j)
+									curr = row.InsertOrdered(curr, LF.Col(k, j), LF.Val(k, j));
+								//eliminate U rows with iR from current row
+								assert(U.Col(k, 0) == k); //diagonal
+								for (idx_t j = 1; j < U.RowSize(k); j++) //after diagonal
+								{
+									idx_t q = BSize - 1 - U.Col(k, j); //row index in iR
+									curr = 0;
+									for (idx_t l = 0; l < iR.RowSize(q); ++l)
+										curr = row.InsertOrdered(curr, iR.Col(q, l), -iR.Val(q, l) * U.Val(k, j));
+								}
+								for (idx_t j = row.Begin(); j != row.End(); j = row.Next(j))
+									row.Get(j) /= U.Val(k, 0);
+								row.Get(iR.get_ja(), iR.get_a());
+								row.Clear();
+								iR.FinalizeRow();
+							}
+						}
+						if (print) std::cout << "Restrictor assembly" << std::endl;
+						{
+							for (idx_t k = 0; k < BSize; ++k)
+							{
+								idx_t q = BSize - 1 - k;
+								for (idx_t j = 0; j < iR.RowSize(q); ++j)
+								{
+									R.get_ja().push_back(iR.Col(q, j));
+									R.get_a().push_back(-iR.Val(q, j));
+								}
+								R.FinalizeRow();
+							}
+							for (idx_t k = 0; k < CSize; ++k)
+							{
+								R.get_ja().push_back(k);
+								R.get_a().push_back(1.0);
+								R.FinalizeRow();
+							}
+						}
+					}
+					if (print) std::cout << "Restrictor Size: " << R.Size() << " Nonzeroes: " << R.Nonzeros() << std::endl;
 				}
-				{//compute S = R B P, B - reordered 
+				//if (print) std::cout << "||I-R^T||" << (I - R.Transpose()).FrobeniusNorm() << std::endl;
+				{//compute S = I B P, B - reordered 
 					CSRMatrix B;
 					if (print) std::cout << "Assemble B - reordered A" << std::endl;
 					{//assemble B - reordered matrix in row-major format
@@ -429,7 +542,7 @@ public:
 							for (idx_t j = 0; j < A.RowSize(iPk); ++j)
 							{
 								idx_t Pc = P[A.Col(iPk, j)];
-								B.PushBack(Pc - BSize, A.Val(iPk, j));
+								B.PushBack(Pc, A.Val(iPk, j));
 							}
 							B.FinalizeRow();
 						}
@@ -437,10 +550,14 @@ public:
 					}
 					//compute Schur
 					if (print) std::cout << "Compute Schur" << std::endl;
-					S = P * B * R;
+					S = I * B * R;
 					assert(S.Size() == CSize);
 
-					if( print ) std::cout << "Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
+					if (print)
+					{
+						std::cout << "Schur Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
+						std::cout << "Symmetric S? " << (S.Symmetric() ? "yes" : "no") << std::endl;
+					}
 				}
 			}
 			//setup next level system
