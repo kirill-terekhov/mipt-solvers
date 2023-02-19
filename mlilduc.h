@@ -43,6 +43,7 @@ public:
 		ret.Set("verbosity",1);
 		ret.Set("inverse_estimation",1);
 		ret.Set("premature_dropping",1);
+		ret.Set("minimal_size", 100);
 		ret.Set("check",0);
 		ret.Set("level","*");
 		return ret;
@@ -51,16 +52,17 @@ public:
 	~MLILDUC() {if(Next) delete Next;}
 	bool Setup(const CSRMatrix & Ain)
 	{
-		bool   print = GetParameters().Get<int>("verbosity") & 1 ? true : false;
+		bool   print        = GetParameters().Get<int>("verbosity") & 1 ? true : false;
 		//bool   check = GetParameters().Get<int>("check") ? true : false;
-		bool   invest = GetParameters().Get<int>("inverse_estimation") ? true : false;
-		bool   predrop = GetParameters().Get<int>("premature_dropping") ? true : false;
+		bool   invest       = GetParameters().Get<int>("inverse_estimation") ? true : false;
+		bool   predrop      = GetParameters().Get<int>("premature_dropping") ? true : false;
 		bool   write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		double tau = GetParameters().Get<double>("drop_tolerance");
-		double kappa = GetParameters().Get<double>("pivot_condition");
-		double pert = GetParameters().Get<double>("diagonal_perturbation");
-		double dtol = GetParameters().Get<double>("diagonal_tolerance");
+		double tau          = GetParameters().Get<double>("drop_tolerance");
+		double kappa        = GetParameters().Get<double>("pivot_condition");
+		double pert         = GetParameters().Get<double>("diagonal_perturbation");
+		double dtol         = GetParameters().Get<double>("diagonal_tolerance");
 		int    level        = GetParameters().Get<int>("level");
+		int    minsize      = GetParameters().Get<int>("minimal_size");
 		std::vector<bool> pivot(Ain.Size(),false);
 		idx_t swaps = 0;
 		{
@@ -141,7 +143,7 @@ public:
 							iLnorm = iLest.Estimate(l,k);
 					}
 				}
-				if( iUnorm < kappa && iLnorm < kappa )
+				if( iUnorm < kappa && iLnorm < kappa || A.Size() < minsize)
 				{
 					//retrive diagonal
 					D[k] = (u.Get(k) + l.Get(k))*0.5;
@@ -233,6 +235,7 @@ public:
 				std::cout << "      fill-in LU: " << (L.Nonzeros() + U.Nonzeros())/(1.0*A.Nonzeros()) << std::endl;
 				std::cout << "      estimated inverse norms L " << iLnorm << " D " << Dmax/Dmin << " U " << iUnorm << std::endl;
 				std::cout << "      swaps " << swaps << std::endl;
+				std::cout << "      symmetric A? " << (A.Symmetric() ? "yes" : "no") << std::endl;
 			}
 		}
 		bool success = true;
@@ -432,7 +435,11 @@ public:
 						S.FinalizeRow();
 					}
 					assert(S.Size() == CSize);
-					if( print ) std::cout << "Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
+					if (print)
+					{
+						std::cout << "Schur Size: " << S.Size() << " Nonzeroes: " << S.Nonzeros() << std::endl;
+						std::cout << "Symmetric S? " << (S.Symmetric() ? "yes" : "no") << std::endl;
+					}
 				}
 			}
 			//setup next level system

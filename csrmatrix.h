@@ -394,7 +394,7 @@ public:
 				}
 			}
 		}
-		std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
+		//std::cout << "sym: " << sqrt(normm/normp) << " m " << normm << " p " << normp << std::endl;
 		if( normm < eps*eps*normp )
 			return true;
 		return false;
