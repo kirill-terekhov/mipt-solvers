@@ -1,13 +1,13 @@
-#include "bpcg.h"
-#include "pcg.h"
+#include "bicgstab.h"
 #include "amg_ruge_stuben.h"
 #include "gauss_seidel.h"
 #include "ilduc.h"
+#include "cpr.h"
+#include "two_stage_gauss_seidel.h"
 
 int main(int argc, char ** argv)
 {
-
-	BramblePasciakCG< AMGRugeStuben< GaussSeidel, PCG<ILDUC> > > Solver;
+	BICGSTAB< CPR< AMGRugeStuben<GaussSeidel, BICGSTAB<ILDUC> >, ILDUC, TwoStageGaussSeidel> > Solver;
 
 	if (argc < 3)
 	{
@@ -45,7 +45,8 @@ int main(int argc, char ** argv)
 		Solver.GetParameters().Load("params.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		std::cout << "Set input block size: " << N << std::endl;
-		Solver.GetParameters().Set<int>("B_block_end", N);
+		Solver.GetParameters().Set("Preconditioner:block_beg", 0);
+		Solver.GetParameters().Set("Preconditioner:block_end", N);
 		Solver.GetParameters().Print();
 		if( Solver.Setup(A) && Solver.Solve(b,x) )
 		{
