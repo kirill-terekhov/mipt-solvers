@@ -14,8 +14,9 @@ class BramblePasciakCG : public Methods
 {
 	Preconditioner P;
 	mutable std::vector<double> r1, r2, p1, p2, q1, q2;
-	mutable std::vector<double> z1, z2, f1, f2, x1, x2;
+	mutable std::vector<double> f1, f2, x1, x2;
 	mutable std::vector<double> w1, w2, pr, apr;
+	double lambda;
 	std::vector<bool> excl;
 	std::vector<int> off;
 	const CSRMatrix * ptr_A;
@@ -28,12 +29,12 @@ public:
 		ret.Set("B_block_beg", 0);
 		ret.Set("B_block_end", 0);
 		ret.Set("tol",1.0e-10);
-		ret.Set("rtol",1.0e-7);
+		ret.Set("rtol",1.0e-14);
 		ret.Set("dtol",1.0e+10);
 		ret.Set("maxiters",5000);
 		ret.Set("verbosity",1);
 		ret.Set("true_residual", 1);
-		ret.Set("flip_sign", 0);
+		ret.Set("flip_sign", 1);
 		ret.SubParameters("Preconditioner") = Preconditioner::DefaultParameters();
 		return ret;
 	}
@@ -52,13 +53,13 @@ public:
 		}
 		P.SetParameters(GetParameters().SubParameters("Preconditioner"));
 		ptr_A = &A;
-		if( print ) std::cout << "A symmetric: " << (A.Symmetric() ? "yes" : "no") << " size " << A.Size() << " nnz " << A.Nonzeros() << std::endl;
-		if(print) std::cout << "B block: " << Bbeg << ":" << Bend << std::endl;
+		if (print) std::cout << "A symmetric: " << (A.Symmetric() ? "yes" : "no") << " size " << A.Size() << " nnz " << A.Nonzeros() << std::endl;
+		if (print) std::cout << "B block: " << Bbeg << ":" << Bend << std::endl;
 		//first mark dirichlet conditions (they could break the symmetry)
 		excl.resize(A.Size(), false);
 		off.resize(A.Size(), 0);
 		int nskip = 0;
-		
+#if 1
 		for (idx_t k = 0; k < A.Size(); ++k)
 		{
 			off[k] = nskip;
@@ -68,7 +69,7 @@ public:
 				nskip++;
 			}
 		}
-		
+#endif
 		std::cout << "Skip dirichlet conditions: " << nskip << std::endl;
 		//assemble blocks B F
 		for (idx_t k = Bbeg; k < Bend; ++k) if (!excl[k])
@@ -116,10 +117,10 @@ public:
 		{
 			std::cout << "||E - F^T||: " << (E - F.Transpose()).FrobeniusNorm() << std::endl;
 			std::cout << "||E + F^T||: " << (E + F.Transpose()).FrobeniusNorm() << std::endl;
-			E.Save("E.mtx");
-			F.Save("F.mtx");
+			//E.Save("E.mtx");
+			//F.Save("F.mtx");
 		}
-		success = P.Setup(B);
+		success = P.Setup(B);	
 		f1.resize(B.Size());
 		f2.resize(E.Size());
 		x1.resize(B.Size());
@@ -134,6 +135,87 @@ public:
 		q2.resize(E.Size());
 		pr.resize(B.Size());
 		apr.resize(B.Size());
+		//Compute eigenvalue (algorithm from ngsolve)
+		if (true)
+		{
+			std::vector<double> ai, bi;
+			for (idx_t k = 0; k < B.Size(); ++k)
+				x1[k] = rand() / (1.0 * RAND_MAX);
+			ApplyPreconditioner(x1, q1);
+			double gamma = Dot(x1, q1), alpha, err = 1;
+			if (gamma < 0.0)
+			{
+				std::cout << "Negative eigenvalue estimate!" << std::endl;
+				return false;
+			}
+			gamma = sqrt(gamma);
+			for (idx_t k = 0; k < B.Size(); ++k)
+			{
+				x1[k] /= gamma;
+				q1[k] /= gamma;
+			}
+			B.Multiply(1.0, q1, 0.0, w1);
+			bi.push_back(0.0);
+			for (int q = 0; q < 100 && err > 1.0e-8; ++q)
+			{
+				alpha = Dot(q1, w1);
+				ai.push_back(alpha);
+				for (idx_t k = 0; k < B.Size(); ++k)
+					p1[k] = w1[k] - alpha * x1[k];
+				ApplyPreconditioner(p1, q1);
+				gamma = Dot(p1, q1);
+				if (gamma < 0.0)
+				{
+					std::cout << "Negative eigenvalue estimate!" << std::endl;
+					return false;
+				}
+				if (gamma < 1.0e-40) break;
+				gamma = sqrt(gamma);
+				bi.push_back(gamma);
+				for (idx_t k = 0; k < B.Size(); ++k)
+				{
+					p1[k] /= gamma;
+					q1[k] /= gamma;
+				}
+				B.Multiply(1.0, q1, 0.0, w1);
+				for (idx_t k = 0; k < B.Size(); ++k)
+				{
+					w1[k] -= gamma * x1[k];
+					x1[k] = p1[k];
+				}
+				err *= fabs(gamma / alpha);
+				std::cout << "iter: " << q << " err: " << err << std::endl;
+			}
+			int k = 1; //last eigenvalue
+			{
+				double xl, xu, x, q;
+				xu = 0;
+				for (size_t i = 0; i < ai.size(); i++)
+				{
+					q = fabs(ai[i]) + fabs(bi[i]) + ((i < ai.size() - 1) ? fabs(bi[i + 1]) : 0);
+					if (q > xu) xu = q;
+				}
+				xl = -xu;
+				while (xu - xl > 1e-15 * fabs(xu) && xu - xl > 1e-100)
+				{
+					x = 0.5 * (xu + xl);
+					size_t zbelow = 0;
+					q = 1;
+					for (size_t i = 0; i < ai.size(); i++)
+					{
+						q = ai[i] - x - bi[i] * bi[i] / q;
+						if (q < 0) zbelow++;
+					}
+					if (zbelow < k + 1)
+						xl = x;
+					else
+						xu = x;
+				}
+				lambda = 0.5 * (xl + xu);
+				std::cout << k <<" lambda: " << lambda << std::endl;
+			}
+		}
+		else lambda = 1.0;
 		return success;
 	}
 	bool ApplyPreconditioner(const std::vector<double> & r, std::vector<double> & z) const
@@ -145,6 +227,11 @@ public:
 			return false;
 		}
 		return true;
+	}
+	void ScalePreconditioner(std::vector<double>& z) const
+	{
+		for (size_t k = 0; k < z.size(); ++k)
+			z[k] /= lambda;
 	}
 	void RecordSolution(int Bbeg, int Bend, const std::vector<double>& x1, const std::vector<double>& x2, std::vector<double>& x) const
 	{
@@ -195,7 +282,7 @@ public:
 				vf2 -= A.Val(k, l) * x[A.Col(k, l)];
 			if (k < Bbeg)
 			{
-				f2[k - off[k]] = vf2;
+				f2[k - off[k]] = (1 - 2 * flip) * vf2;
 				x2[k - off[k]] = x[k];
 			}
 			else
@@ -206,6 +293,7 @@ public:
 		}
 		// F = [ P f1 \\ E P f1 - f2 ]
 		ApplyPreconditioner(f1, pr);
+		ScalePreconditioner(pr);
 		std::copy(pr.begin(), pr.end(), p1.begin());
 		std::copy(f2.begin(), f2.end(), p2.begin());
 		E.Multiply(1.0, pr, -1.0, p2);
@@ -233,6 +321,7 @@ public:
 			B.Multiply(1.0, p1, 0.0, q1);
 			F.Multiply(1.0, p2, 1.0, q1);
 			ApplyPreconditioner(q1, apr);
+			ScalePreconditioner(apr);
 			B.Multiply(1.0, apr, -1.0, q1);
 			E.Multiply(1.0, apr, 0.0, q2);
 			E.Multiply(-1.0, p1, 1.0, q2);
@@ -248,7 +337,7 @@ public:
 			for (idx_t k = 0; k < pr.size(); ++k) pr[k] -= alpha * apr[k];
 
 			for (idx_t k = 0; k < w1.size(); ++k) w1[k] = pr[k];
-			for (idx_t k = 0; k < w2.size(); ++k) w2[k] = r1[k];
+			for (idx_t k = 0; k < w2.size(); ++k) w2[k] = r2[k];
 
 			beta = 1.0 / kappa;
 			kappa = Dot(w1, r1) + Dot(w2, r2);	
@@ -263,14 +352,14 @@ public:
 				std::cout << "BPCG "  << std::setw(4) << iters << " " << std::setw(14) << resid << " | " << ftol;
 				if (ptrue)
 				{
-					RecordSolution(Bbeg,Bend,x1, x2, x);
+					RecordSolution(Bbeg, Bend, x1, x2, x);
 					std::cout << " true " << std::setw(14) << Resid(A, b, x);
 				}
 				std::cout << std::endl;
 			}
 			iters++;
 		}
-		RecordSolution(Bbeg,Bend,x1, x2, x);
+		RecordSolution(Bbeg, Bend, x1, x2, x);
 		if (print)
 		{
 			std::cout << "BPCG " << std::setw(4) << iters;
@@ -289,7 +378,6 @@ public:
 		ret += get_bytes(f1) + get_bytes(f2);
 		ret += get_bytes(x1) + get_bytes(x2);
 		ret += get_bytes(r1) + get_bytes(r2);
-		ret += get_bytes(z1) + get_bytes(z2);
 		ret += get_bytes(p1) + get_bytes(p2);
 		ret += get_bytes(q1) + get_bytes(q2);
 		ret += get_bytes(w1) + get_bytes(w2);

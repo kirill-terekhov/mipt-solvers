@@ -1,5 +1,6 @@
 #include "bpcg.h"
 #include "pcg.h"
+#include "bicgstab.h"
 #include "amg_ruge_stuben.h"
 #include "gauss_seidel.h"
 #include "ilduc.h"
@@ -7,7 +8,7 @@
 int main(int argc, char ** argv)
 {
 
-	BramblePasciakCG< AMGRugeStuben< GaussSeidel, PCG<ILDUC> > > Solver;
+	BramblePasciakCG< AMGRugeStuben< GaussSeidel, BICGSTAB<ILDUC> > > Solver;
 
 	if (argc < 3)
 	{
