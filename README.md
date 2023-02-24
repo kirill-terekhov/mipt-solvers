@@ -12,5 +12,5 @@ Contents in branches:
 * lect7 - M-version of multi-level inverse-based incomplete Crout factorization
 * lect8 - Rescaling and reordering in ILU method: maximal transversal, sinkhorn scaling, symmetric scaling, weighted reverse-cuthill mckee, nested dissection using metis
 * lect9 - Rescaling and reordering in S and M multilevel ILU methods: maximal transversal and weighted reverse-cuthill mckee
-* lect10 - Bramble-Pasciak conjugate gradient method for saddle-point problems (under construction)
+* lect10 - Bramble-Pasciak conjugate gradient method for saddle-point problems
 * lect11 - Two-stage and two-stage gauss-seidel method with CPR rescaling for two-phase filtration problem
