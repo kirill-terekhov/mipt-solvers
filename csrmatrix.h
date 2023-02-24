@@ -428,6 +428,19 @@ public:
 		}
 		return sqrt(ret);
 	}
+	double Trace() const
+	{
+		double ret = 0;
+		for (idx_t k = 0; k < Size(); ++k)
+		{
+			for (idx_t l = 0; l < RowSize(k); ++l) if (Col(k, l) == k)
+			{
+				ret += Val(k, l);
+				break;
+			}
+		}
+		return ret;
+	}
 	bool Compare(CSRMatrixType const & b, double eps = 1.0e-7) const
 	{
 		idx_t err = 0;

@@ -7,12 +7,31 @@
 * Conjugate gradient method of Bramble-Pasciak
 * [1] A Preconditioning Technique for Indefinite Systems Resulting from Mixed Approximations of Elliptic Problems
 * James Bramble and Joseph Pasciak
+* 
+* Initial system
+* |B  F| |x1| _ |f1|
+* |E -C| |x2| - |f2|
+* 
+* Assumptions: B > 0, C >= 0, E = F^T
+* 
+* P is a preconditioner for B: P ~ B^{-1}
+* such that P B has smallest eigenvalue 1
+* 
+* Modified system
+* |B-P^{-1} | |I   | |P  | |B  F| |x1| _ |B P f1 - f1|
+* |        I| |E -I| |  I| |E -C| |x2| - |E P f1 - f2|
+* 
+* That is
+* |B P B - B   B P F - F | |x1| _ |B P f1 - f1|
+* |E P B - E   C + E P F | |x2| - |E P f1 - f2|
+* 
+* Modified system is solved using CG
 */
 
 template<typename Preconditioner>
 class BramblePasciakCG : public Methods
 {
-	Preconditioner P;
+	Preconditioner P;// , PC;
 	mutable std::vector<double> r1, r2, p1, p2, q1, q2;
 	mutable std::vector<double> f1, f2, x1, x2;
 	mutable std::vector<double> w1, w2, pr, apr;
@@ -21,6 +40,7 @@ class BramblePasciakCG : public Methods
 	std::vector<int> off;
 	const CSRMatrix * ptr_A;
 	CSRMatrix B, E, F, C; //matrix splitting
+	//bool have_C;
 public:
 	static Parameters DefaultParameters()
 	{
@@ -29,7 +49,7 @@ public:
 		ret.Set("B_block_beg", 0);
 		ret.Set("B_block_end", 0);
 		ret.Set("tol",1.0e-10);
-		ret.Set("rtol",1.0e-14);
+		ret.Set("rtol",1.0e-9);
 		ret.Set("dtol",1.0e+10);
 		ret.Set("maxiters",5000);
 		ret.Set("verbosity",1);
@@ -90,7 +110,7 @@ public:
 		{
 			std::cout << "B size " << B.Size() << " nnz " << B.Nonzeros() << std::endl;
 			std::cout << "F size " << F.Size() << " nnz " << F.Nonzeros() << std::endl;
-			std::cout << "B symmetric? " << (B.Symmetric() ? "yes" : "no") << " frobenius norm " << B.FrobeniusNorm() << std::endl;
+			std::cout << "B symmetric? " << (B.Symmetric() ? "yes" : "no") << " frobenius norm " << B.FrobeniusNorm() << " trace " << B.Trace() << std::endl;
 		}
 		//assemble blocks E C with minus sign
 		for (idx_t k = 0; k < A.Size(); ++k) if ((k < Bbeg || k >= Bend) && !excl[k])
@@ -100,9 +120,9 @@ public:
 				if (A.Col(k, l) >= Bbeg && A.Col(k, l) < Bend)
 					E.PushBack(A.Col(k, l) - (off[A.Col(k, l)] - off[Bbeg]) - Bbeg, (1 - 2 * flip) * A.Val(k, l));
 				else if (A.Col(k, l) < Bbeg)
-					C.PushBack(A.Col(k, l) - off[A.Col(k, l)], (1 - 2 * flip) * A.Val(k, l));
+					C.PushBack(A.Col(k, l) - off[A.Col(k, l)], -(1 - 2 * flip) * A.Val(k, l));
 				else
-					C.PushBack(A.Col(k, l) - (off[A.Col(k, l)] - (off[Bend] - off[Bbeg])) - (Bend - Bbeg), (1 - 2 * flip) * A.Val(k, l));
+					C.PushBack(A.Col(k, l) - (off[A.Col(k, l)] - (off[Bend] - off[Bbeg])) - (Bend - Bbeg), -(1 - 2 * flip) * A.Val(k, l));
 			}
 			C.FinalizeRow();
 			E.FinalizeRow();
@@ -111,8 +131,10 @@ public:
 		{
 			std::cout << "E size " << E.Size() << " nnz " << E.Nonzeros() << std::endl;
 			std::cout << "C size " << C.Size() << " nnz " << C.Nonzeros() << std::endl;
-			std::cout << "C symmetric? " << (C.Symmetric() ? "yes" : "no") << " frobenius norm " << C.FrobeniusNorm() << std::endl;
+			std::cout << "C symmetric? " << (C.Symmetric() ? "yes" : "no") << " frobenius norm " << C.FrobeniusNorm() << " trace " << C.Trace() << std::endl;
 		}
+		//if (C.FrobeniusNorm())
+		//	have_C = true;
 		if (print)
 		{
 			std::cout << "||E - F^T||: " << (E - F.Transpose()).FrobeniusNorm() << std::endl;
@@ -120,7 +142,10 @@ public:
 			//E.Save("E.mtx");
 			//F.Save("F.mtx");
 		}
-		success = P.Setup(B);	
+		success = P.Setup(B);
+		//if (have_C)
+		//	success &= PC.Setup(C);
+		if (!success) return false;
 		f1.resize(B.Size());
 		f2.resize(E.Size());
 		x1.resize(B.Size());
@@ -186,7 +211,7 @@ public:
 				err *= fabs(gamma / alpha);
 				std::cout << "iter: " << q << " err: " << err << std::endl;
 			}
-			int k = 1; //last eigenvalue
+			int k = 0; //last eigenvalue
 			{
 				double xl, xu, x, q;
 				xu = 0;
@@ -242,7 +267,7 @@ public:
 			if (k < Bbeg)
 				x[k] = x2[k - off[k]];// *(1 - 2 * flip);
 			else
-				x[k] = x2[k - (off[k] - (off[Bend] - off[Bbeg])) - (Bend - Bbeg)];// *(1 - 2 * flip);
+				x[k] = x2[k - (off[k] - (off[Bend] - off[Bbeg])) - (Bend - Bbeg)];
 		}
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
@@ -257,7 +282,7 @@ public:
 		double rtol = GetParameters().Get<double>("rtol");
 		double dtol = GetParameters().Get<double>("dtol");
 		int iters = 1;
-		double resid, resid0, beta, alpha, kappa, wr, wrn, ftol;
+		double resid, resid0, beta, alpha, kappa, ftol;
 		const CSRMatrix & A = *ptr_A;
 		idx_t size = A.Size();
 		x.resize(size, 0.0);
@@ -302,8 +327,13 @@ public:
 		std::copy(f2.begin(), f2.end(), r2.begin());
 		B.Multiply(1.0, pr, -1.0, r1);
 		E.Multiply(1.0, pr, -1.0, r2);
+
+		//if (have_C) PC.Solve(r2, p2);
 		
 		kappa = Dot(r1, p1) + Dot(r2, p2);
+
+		
+		
 		resid0 = resid = sqrt(fabs(kappa));
 		ftol = std::max(tol,rtol*resid0);
 		if (print)
@@ -325,6 +355,7 @@ public:
 			B.Multiply(1.0, apr, -1.0, q1);
 			E.Multiply(1.0, apr, 0.0, q2);
 			E.Multiply(-1.0, p1, 1.0, q2);
+			C.Multiply(1.0, p2, 1.0, q2);
 
 			alpha = kappa / (Dot(p1, q1) + Dot(p2, q2));
 
@@ -337,6 +368,8 @@ public:
 			for (idx_t k = 0; k < pr.size(); ++k) pr[k] -= alpha * apr[k];
 
 			for (idx_t k = 0; k < w1.size(); ++k) w1[k] = pr[k];
+			//if (have_C) PC.Solve(r2, w2);
+			//else 
 			for (idx_t k = 0; k < w2.size(); ++k) w2[k] = r2[k];
 
 			beta = 1.0 / kappa;
