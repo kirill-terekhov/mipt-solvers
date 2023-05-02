@@ -71,10 +71,10 @@ public:
 			std::cout << "No block selected!" << std::endl;
 			return false;
 		}
+		else if (print) std::cout << "B block: " << Bbeg << ":" << Bend << std::endl;
 		P.SetParameters(GetParameters().SubParameters("Preconditioner"));
 		ptr_A = &A;
-		if (print) std::cout << "A symmetric: " << (A.Symmetric() ? "yes" : "no") << " size " << A.Size() << " nnz " << A.Nonzeros() << std::endl;
-		if (print) std::cout << "B block: " << Bbeg << ":" << Bend << std::endl;
+		//if (print) std::cout << "A symmetric: " << (A.Symmetric() ? "yes" : "no") << " size " << A.Size() << " nnz " << A.Nonzeros() << std::endl;
 		//first mark dirichlet conditions (they could break the symmetry)
 		excl.resize(A.Size(), false);
 		off.resize(A.Size(), 0);
@@ -90,8 +90,19 @@ public:
 			}
 		}
 #endif
-		std::cout << "Skip dirichlet conditions: " << nskip << std::endl;
+		if (print) std::cout << "Skip dirichlet conditions: " << nskip << std::endl;
 		//assemble blocks B F
+		size_t Bnnz = 0, Fnnz = 0;
+		for (idx_t k = Bbeg; k < Bend; ++k) if (!excl[k])
+			for (idx_t l = 0; l < A.RowSize(k); ++l) if (!excl[A.Col(k, l)])
+			{
+				if (A.Col(k, l) >= Bbeg && A.Col(k, l) < Bend)
+					Bnnz++;
+				else Fnnz++;
+			}
+		if (print) std::cout << "Nonzeroes in B " << Bnnz << " in F " << Fnnz << std::endl;
+		B.ReserveNonzeros(Bnnz);
+		F.ReserveNonzeros(Fnnz);
 		for (idx_t k = Bbeg; k < Bend; ++k) if (!excl[k])
 		{
 			for (idx_t l = 0; l < A.RowSize(k); ++l) if (!excl[A.Col(k, l)])
@@ -110,9 +121,20 @@ public:
 		{
 			std::cout << "B size " << B.Size() << " nnz " << B.Nonzeros() << std::endl;
 			std::cout << "F size " << F.Size() << " nnz " << F.Nonzeros() << std::endl;
-			std::cout << "B symmetric? " << (B.Symmetric() ? "yes" : "no") << " frobenius norm " << B.FrobeniusNorm() << " trace " << B.Trace() << std::endl;
+			//std::cout << "B symmetric? " << (B.Symmetric() ? "yes" : "no") << " frobenius norm " << B.FrobeniusNorm() << " trace " << B.Trace() << std::endl;
 		}
 		//assemble blocks E C with minus sign
+		size_t Ennz = 0, Cnnz = 0;
+		for (idx_t k = 0; k < A.Size(); ++k) if ((k < Bbeg || k >= Bend) && !excl[k])
+			for (idx_t l = 0; l < A.RowSize(k); ++l) if (!excl[A.Col(k, l)])
+			{
+				if (A.Col(k, l) >= Bbeg && A.Col(k, l) < Bend)
+					Ennz++;
+				else Cnnz++;
+			}
+		if (print) std::cout << "Nonzeroes in E " << Ennz << " in C " << Cnnz << std::endl;
+		E.ReserveNonzeros(Ennz);
+		C.ReserveNonzeros(Cnnz);
 		for (idx_t k = 0; k < A.Size(); ++k) if ((k < Bbeg || k >= Bend) && !excl[k])
 		{
 			for (idx_t l = 0; l < A.RowSize(k); ++l) if (!excl[A.Col(k, l)])
@@ -131,11 +153,12 @@ public:
 		{
 			std::cout << "E size " << E.Size() << " nnz " << E.Nonzeros() << std::endl;
 			std::cout << "C size " << C.Size() << " nnz " << C.Nonzeros() << std::endl;
-			std::cout << "C symmetric? " << (C.Symmetric() ? "yes" : "no") << " frobenius norm " << C.FrobeniusNorm() << " trace " << C.Trace() << std::endl;
+			//std::cout << "C symmetric? " << (C.Symmetric() ? "yes" : "no") << " frobenius norm " << C.FrobeniusNorm() << " trace " << C.Trace() << std::endl;
 		}
 		//if (C.FrobeniusNorm())
 		//	have_C = true;
-		if (print)
+		//if (print)
+		if(false)
 		{
 			std::cout << "||E - F^T||: " << (E - F.Transpose()).FrobeniusNorm() << std::endl;
 			std::cout << "||E + F^T||: " << (E + F.Transpose()).FrobeniusNorm() << std::endl;
