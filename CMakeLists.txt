@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.6)
-project(lect12)
+project(lect13)
 
 
-add_library(lect12 INTERFACE)
-add_executable(Deadoil          utils/deadoil_nln.cpp)
+add_library(lect13 INTERFACE)
+add_executable(Carriers  carriers.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-install(TARGETS lect12 EXPORT lect12-targets
+install(TARGETS lect13 EXPORT lect13-targets
 	ARCHIVE DESTINATION lib
 	LIBRARY DESTINATION lib
 	RUNTIME DESTINATION bin
 	PUBLIC_HEADER DESTINATION include)
-install(EXPORT lect12-targets DESTINATION cmake)
+install(EXPORT lect13-targets DESTINATION cmake)
