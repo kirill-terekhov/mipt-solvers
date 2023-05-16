@@ -14,3 +14,5 @@ Contents in branches:
 * lect9 - Rescaling and reordering in S and M multilevel ILU methods: maximal transversal and weighted reverse-cuthill mckee
 * lect10 - Bramble-Pasciak conjugate gradient method for saddle-point problems
 * lect11 - Two-stage and two-stage gauss-seidel method with CPR rescaling for two-phase filtration problem
+* lect12 - Example of using Newton method with CPR-AMG solver for quater-five spot problem of two-phase miscible displacement
+* lect13 - Example of deflation method application for finding multiple solutions of Carrier's problem.
