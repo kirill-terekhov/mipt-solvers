@@ -56,11 +56,11 @@ public:
 		double resid, resid0, beta, alpha, kappa,ftol;
 		const CSRMatrix & A = *ptr_A;
 		idx_t size = A.Size();
-        x.resize(size,0.0);
-        std::copy(b.begin(),b.end(),r.begin());
-        A.Multiply(-1.0,x,1.0,r);
-        ApplyPreconditioner(r,z);
-        std::copy(z.begin(),z.end(),p.begin()); //~ p = z;
+		x.resize(size,0.0);
+		std::copy(b.begin(),b.end(),r.begin());
+		A.Multiply(-1.0,x,1.0,r);
+		ApplyPreconditioner(r,z);
+		std::copy(z.begin(),z.end(),p.begin()); //~ p = z;
 		kappa = Dot(r,z);
 		resid0 = resid = sqrt(fabs(kappa));
 		ftol = std::max(tol,rtol*resid0);
@@ -73,7 +73,7 @@ public:
 			//~ std::cout << "\r";
 			//~ std::cout.flush();
 		}
-        while( resid > ftol && resid < dtol && iters < maxiters+1 )
+		while( resid > ftol && resid < dtol && iters < maxiters+1 )
 		{
 			A.Multiply(1.0,p,0.0,w);//~ w = A*p;
 			alpha = kappa/Dot(w,p);
