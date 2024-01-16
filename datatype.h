@@ -5,7 +5,7 @@
 //#include <omp.h>
 #include <cstdint>
 
-typedef unsigned idx_t;
+typedef int idx_t;
 
 #ifndef INLINE
 # if __GNUC__ && !__GNUC_STDC_INLINE__
