@@ -35,11 +35,11 @@ public:
 	bool Setup(const CSRMatrix & A)
 	{
 		B = A;
-		bool print        = GetParameters().Get<int>("verbosity")? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		bool check        = GetParameters().Get<int>("check")? true : false;
-		int maxiters      = GetParameters().Get<int>("maxiters");
-		int level         = GetParameters().Get<int>("level");
+		bool print        = GetParameters().template Get<int>("verbosity")? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		bool check        = GetParameters().template Get<int>("check")? true : false;
+		int maxiters      = GetParameters().template Get<int>("maxiters");
+		int level         = GetParameters().template Get<int>("level");
 		idx_t size = A.Size();
 		L.resize(size,1);
 		R.resize(size,1);

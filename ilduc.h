@@ -58,7 +58,7 @@ public:
 		CSCTraversal At(A,A.Size()), Lt(L,A.Size()), Ut(U,A.Size());
 		RowAccumulator<double> u(A.Size()), l(A.Size());
 		std::vector<double> unorms(A.Size(),0.0), lnorms(A.Size(),0.0);
-		Invnorm iLest(invest | print ? A.Size() : 0), iUest(invest | print ? A.Size() : 0);
+		Invnorm iLest((invest | print) ? A.Size() : 0), iUest((invest | print) ? A.Size() : 0);
 		double iLnorm = 1, iUnorm = 1, Dmax = 0, Dmin = 1.0e+20;
 		D.resize(A.Size(),0.0);
 		if( print ) 

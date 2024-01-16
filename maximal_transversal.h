@@ -37,12 +37,12 @@ public:
 	MaximalTransversal() {GetParameters() = DefaultParameters();}
 	bool Setup(const CSRMatrix & A)
 	{
-		bool print        = GetParameters().Get<int>("verbosity")? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		bool reorder      = GetParameters().Get<int>("reorder")? true : false;
-		bool check        = GetParameters().Get<int>("check")? true : false;
-		int maxiters      = GetParameters().Get<int>("maxiters");
-		int level = GetParameters().Get<int>("level");
+		bool print        = GetParameters().template Get<int>("verbosity")? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		bool reorder      = GetParameters().template Get<int>("reorder")? true : false;
+		bool check        = GetParameters().template Get<int>("check")? true : false;
+		int maxiters      = GetParameters().template Get<int>("maxiters");
+		int level         = GetParameters().template Get<int>("level");
 		const idx_t NDEF = std::numeric_limits<idx_t>::max(), EOL = NDEF-1;
 		idx_t size = A.Size();
 		PriorityQueue<double, std::less_equal<double> > queue(size,std::numeric_limits<double>::max());
