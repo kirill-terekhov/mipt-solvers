@@ -2,7 +2,7 @@
 #define _DATATYPE_H
 #include <cstddef>
 #include <vector>
-#include <omp.h>
+//#include <omp.h>
 #include <cstdint>
 
 typedef unsigned idx_t;
