@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 const bool write_sol = false;
 const double ndtol = 1.0e+20;
