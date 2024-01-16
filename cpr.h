@@ -210,13 +210,13 @@ public:
 	//colsum = true corresponds to True-IMPES, = false to Quasi-IMPES
 	bool Setup(const CSRMatrix & A)
 	{
-		std::string type = GetParameters().Get<std::string>("type");
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool check = GetParameters().Get<int>("check") ? true : false;
-		bool order = GetParameters().Get<int>("order") ? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		idx_t block_beg = GetParameters().Get<idx_t>("block_beg");
-		idx_t block_end = GetParameters().Get<idx_t>("block_end");
+		std::string type = GetParameters().template Get<std::string>("type");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool check = GetParameters().template Get<int>("check") ? true : false;
+		bool order = GetParameters().template Get<int>("order") ? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		idx_t block_beg = GetParameters().template Get<idx_t>("block_beg");
+		idx_t block_end = GetParameters().template Get<idx_t>("block_end");
 		bool colsum = false;
 		C.Clear();
 		CA.Clear();
@@ -257,8 +257,8 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool scaling = GetParameters().Get<std::string>("type") == "none" ? false : true;
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool scaling = GetParameters().template Get<std::string>("type") == "none" ? false : true;
 		if( scaling )
 		{
 			C.Multiply(1.0,b,0.0,Cb); //~ Cb = C*b
@@ -298,13 +298,13 @@ public:
 	//colsum = true corresponds to True-IMPES, = false to Quasi-IMPES
 	bool Setup(const CSRMatrix & A)
 	{
-		std::string type = GetParameters().Get<std::string>("type");
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool check = GetParameters().Get<int>("check") ? true : false;
-		bool order = GetParameters().Get<int>("order") ? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		idx_t block_beg = GetParameters().Get<idx_t>("block_beg");
-		idx_t block_end = GetParameters().Get<idx_t>("block_end");
+		std::string type = GetParameters().template Get<std::string>("type");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool check = GetParameters().template Get<int>("check") ? true : false;
+		bool order = GetParameters().template Get<int>("order") ? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		idx_t block_beg = GetParameters().template Get<idx_t>("block_beg");
+		idx_t block_end = GetParameters().template Get<idx_t>("block_end");
 		bool colsum = false;
 		C.Clear();
 		CA.Clear();
@@ -347,8 +347,8 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool scaling = GetParameters().Get<std::string>("type") == "none" ? false : true;
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool scaling = GetParameters().template Get<std::string>("type") == "none" ? false : true;
 		if( scaling )
 		{
 			C.Multiply(1.0,b,0.0,Cb); //~ Cb = C*b

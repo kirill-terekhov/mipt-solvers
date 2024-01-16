@@ -145,7 +145,7 @@ public:
 	}
 	void Operator(const CSRMatrix & A, const CSRMatrixType<idx_t> & S, const std::vector<char> & CF, CSRMatrix & I) const
 	{
-		bool   check        = GetParameters().Get<int>("check") ? true : false;
+		bool   check        = GetParameters().template Get<int>("check") ? true : false;
 		I.Clear();
 		std::vector<idx_t> id;
 		id.resize(A.Size(),-1);
@@ -266,12 +266,12 @@ public:
 	}
 	bool Setup(const CSRMatrix & A)
 	{
-		bool   print        = GetParameters().Get<int>("verbosity") ? true : false;
-		bool   check        = GetParameters().Get<int>("check") ? true : false;
-		bool   order        = GetParameters().Get<int>("order") ? true : false;
-		bool   write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		double phi          = GetParameters().Get<double>("phi");
-		int    level        = GetParameters().Get<int>("level");
+		bool   print        = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool   check        = GetParameters().template Get<int>("check") ? true : false;
+		bool   order        = GetParameters().template Get<int>("order") ? true : false;
+		bool   write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		double phi          = GetParameters().template Get<double>("phi");
+		int    level        = GetParameters().template Get<int>("level");
 		idx_t FSize;
 		ptr_A = &A;
 		if( print ) std::cout << "level " << level << std::endl;
@@ -345,7 +345,7 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		std::string cycle = GetParameters().Get<std::string>("cycle");
+		std::string cycle = GetParameters().template Get<std::string>("cycle");
 		const CSRMatrix & A = *ptr_A;
 		bool success = true;
 		std::fill(xn.begin(),xn.end(),0.0);

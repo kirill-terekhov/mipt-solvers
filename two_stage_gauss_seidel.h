@@ -32,11 +32,11 @@ public:
 	{
 		idx_t err = 0;
 		ptr_A = &A;
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool check = GetParameters().Get<int>("check") ? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		idx_t block_beg = GetParameters().Get<idx_t>("block_beg");
-		idx_t block_end = GetParameters().Get<idx_t>("block_end");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool check = GetParameters().template Get<int>("check") ? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		idx_t block_beg = GetParameters().template Get<idx_t>("block_beg");
+		idx_t block_end = GetParameters().template Get<idx_t>("block_end");
 		idx_t block_size = block_end-block_beg;
 		if( print )
 			std::cout << "System size " << A.Size() << " sub-system block " << block_beg << ":" << block_end << " size " << block_size << std::endl;
@@ -123,9 +123,9 @@ public:
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
 		bool success = true;
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		idx_t block_beg = GetParameters().Get<idx_t>("block_beg");
-		idx_t block_end = GetParameters().Get<idx_t>("block_end");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		idx_t block_beg = GetParameters().template Get<idx_t>("block_beg");
+		idx_t block_end = GetParameters().template Get<idx_t>("block_end");
 		idx_t block_size = block_end - block_beg;
 		const CSRMatrix & A = *ptr_A;
 		x.resize(A.Size(),0.0);
