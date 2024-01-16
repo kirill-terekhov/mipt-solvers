@@ -53,17 +53,17 @@ public:
 	~MLILDUC() {if(Next) delete Next;}
 	bool Setup(const CSRMatrix & Ain)
 	{
-		bool   print        = GetParameters().Get<int>("verbosity") & 1 ? true : false;
-		//bool   check = GetParameters().Get<int>("check") ? true : false;
-		bool   invest       = GetParameters().Get<int>("inverse_estimation") ? true : false;
-		bool   predrop      = GetParameters().Get<int>("premature_dropping") ? true : false;
-		bool   write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		double tau          = GetParameters().Get<double>("drop_tolerance");
-		double kappa        = GetParameters().Get<double>("pivot_condition");
-		double pert         = GetParameters().Get<double>("diagonal_perturbation");
-		double dtol         = GetParameters().Get<double>("diagonal_tolerance");
-		int    level        = GetParameters().Get<int>("level");
-		int    minsize      = GetParameters().Get<int>("minimal_size");
+		bool   print        = GetParameters().template Get<int>("verbosity") & 1 ? true : false;
+		//bool   check = GetParameters().template Get<int>("check") ? true : false;
+		bool   invest       = GetParameters().template Get<int>("inverse_estimation") ? true : false;
+		bool   predrop      = GetParameters().template Get<int>("premature_dropping") ? true : false;
+		bool   write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		double tau          = GetParameters().template Get<double>("drop_tolerance");
+		double kappa        = GetParameters().template Get<double>("pivot_condition");
+		double pert         = GetParameters().template Get<double>("diagonal_perturbation");
+		double dtol         = GetParameters().template Get<double>("diagonal_tolerance");
+		int    level        = GetParameters().template Get<int>("level");
+		int    minsize      = GetParameters().template Get<int>("minimal_size");
 		int dropsL = 0, dropsU = 0;
 		std::vector<bool> pivot(Ain.Size(),false);
 		idx_t swaps = 0;

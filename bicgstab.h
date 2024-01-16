@@ -50,12 +50,12 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		bool print = GetParameters().Get<int>("verbosity")? true : false;
-		bool ptrue = GetParameters().Get<int>("true_residual") ? true : false;
-		int maxiters = GetParameters().Get<int>("maxiters");
-		double tol  = GetParameters().Get<double>("tol");
-		double rtol = GetParameters().Get<double>("rtol");
-		double dtol = GetParameters().Get<double>("dtol");
+		bool print = GetParameters().template Get<int>("verbosity")? true : false;
+		bool ptrue = GetParameters().template Get<int>("true_residual") ? true : false;
+		int maxiters = GetParameters().template Get<int>("maxiters");
+		double tol  = GetParameters().template Get<double>("tol");
+		double rtol = GetParameters().template Get<double>("rtol");
+		double dtol = GetParameters().template Get<double>("dtol");
 		int iters = 1;
 		idx_t size = ptr_A->Size();
 		const CSRMatrix & A = *ptr_A;

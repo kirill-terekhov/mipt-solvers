@@ -40,9 +40,9 @@ public:
 	WeightedReverseCuthillMckee() {GetParameters() = DefaultParameters();}
 	bool Setup(const CSRMatrix & A)
 	{
-		bool print        = GetParameters().Get<int>("verbosity")? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		int level         = GetParameters().Get<int>("level");
+		bool print        = GetParameters().template Get<int>("verbosity")? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		int level         = GetParameters().template Get<int>("level");
 		{
 			CSRGraph G(A.get_ia(), A.get_ja());
 			std::vector<double> weights(A.Size());
