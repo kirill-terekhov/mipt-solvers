@@ -62,10 +62,10 @@ public:
 	bool Setup(const CSRMatrix & A)
 	{
 		bool success;
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		int Bbeg = GetParameters().Get<int>("B_block_beg");
-		int Bend = GetParameters().Get<int>("B_block_end");
-		int flip = GetParameters().Get<int>("flip_sign");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		int Bbeg = GetParameters().template Get<int>("B_block_beg");
+		int Bend = GetParameters().template Get<int>("B_block_end");
+		int flip = GetParameters().template Get<int>("flip_sign");
 		if (Bbeg == Bend)
 		{
 			std::cout << "No block selected!" << std::endl;
@@ -295,21 +295,21 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		int Bbeg = GetParameters().Get<int>("B_block_beg");
-		int Bend = GetParameters().Get<int>("B_block_end");
-		int flip = GetParameters().Get<int>("flip_sign");
-		bool ptrue = GetParameters().Get<int>("true_residual") ? true : false;
-		int maxiters = GetParameters().Get<int>("maxiters");
-		double tol  = GetParameters().Get<double>("tol");
-		double rtol = GetParameters().Get<double>("rtol");
-		double dtol = GetParameters().Get<double>("dtol");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		int Bbeg = GetParameters().template Get<int>("B_block_beg");
+		int Bend = GetParameters().template Get<int>("B_block_end");
+		int flip = GetParameters().template Get<int>("flip_sign");
+		bool ptrue = GetParameters().template Get<int>("true_residual") ? true : false;
+		int maxiters = GetParameters().template Get<int>("maxiters");
+		double tol  = GetParameters().template Get<double>("tol");
+		double rtol = GetParameters().template Get<double>("rtol");
+		double dtol = GetParameters().template Get<double>("dtol");
 		int iters = 1;
 		double resid, resid0, beta, alpha, kappa, ftol;
 		const CSRMatrix & A = *ptr_A;
 		idx_t size = A.Size();
 		x.resize(size, 0.0);
-        //extract rhs with account of excluded entries
+		//extract rhs with account of excluded entries
 		//precompute Dirichlet values
 		for (idx_t k = 0; k < A.Size(); ++k) if (excl[k]) 
 			x[k] = b[k] / A.Val(k, 0);
