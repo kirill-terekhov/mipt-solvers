@@ -2,6 +2,7 @@
 #define _CHEBYSHEV_H
 #include "method.h"
 #include <cmath>
+#include <algorithm>
 
 /* Chebyshev 
  * this is chebyshev polynomial smoother with
