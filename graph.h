@@ -289,7 +289,7 @@ public:
 		return ret;
 	}
 	size_t Nonzeros() const {return ja.size();}
-	idx_t Size() const {return ia.size()-1;}
+	idx_t Size() const {return static_cast<idx_t>(ia.size())-1;}
 	idx_t RowSize(idx_t i) const {return ia[i+1]-ia[i];}
 	idx_t Col(idx_t i, idx_t k) const {return ja[ia[i]+k];}
 	idx_t Col(const std::pair<idx_t,idx_t> & p) const {return Col(p.first,p.second);}
@@ -302,7 +302,7 @@ public:
 	}
 	void Insert(const std::vector<idx_t> & ja_part) {ja.insert(ja.end(),ja_part.begin(),ja_part.end());}
 	void PushBack(idx_t col) { ja.push_back(col); }
-	void FinalizeRow() { ia.push_back(ja.size()); }
+	void FinalizeRow() { ia.push_back(static_cast<idx_t>(ja.size())); }
 	void Clear() 
 	{
 		if( Offloaded() )

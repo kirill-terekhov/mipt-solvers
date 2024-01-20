@@ -1,5 +1,6 @@
 #include "csrmatrix.h"
 #include "metis_ordering.h"
+#include "fiedler.h"
 
 int main(int argc, char ** argv)
 {
@@ -11,7 +12,11 @@ int main(int argc, char ** argv)
 		std::vector<idx_t> Q;
 		CSRMatrix C;
 		{
+#if defined(USE_METIS)
 			Metis<DummySolver> order;
+#else
+			Fiedler<DummySolver> order;
+#endif
 			order.GetParameters().Set("parts", nparts);
 			//order.GetParameters().Set("separator", "0");
 			order.GetParameters().Set("write_matrix", "1");

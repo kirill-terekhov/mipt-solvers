@@ -1,5 +1,6 @@
 #include "bicgstab.h"
 #include "ilduc.h"
+#include "fiedler.h"
 #include "metis_ordering.h"
 #include "maximal_transversal.h"
 
@@ -30,8 +31,11 @@ int main(int argc, char ** argv)
 			else
 				LoadVector(std::string(argv[3]),x);
 		}
-		
+#if defined(USE_METIS)
 		BICGSTAB< MaximalTransversal< Metis< ILDUC > > > Solver;
+#else
+		BICGSTAB< MaximalTransversal< Fiedler< ILDUC > > > Solver;
+#endif
 		
 		Solver.GetParameters().Save("params_default.txt");
 		Solver.GetParameters().SaveRaw("params_default.raw");
