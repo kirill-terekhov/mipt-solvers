@@ -53,12 +53,12 @@ public:
 	Metis() {GetParameters() = DefaultParameters();}
 	bool Setup(const CSRMatrix& A)
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		bool sorted = GetParameters().Get<int>("sorted") ? true : false;
-		int level = GetParameters().Get<int>("level");
-		std::string mt = GetParameters().Get<std::string>("method");
-		metis_idx_t nparts = GetParameters().Get<metis_idx_t>("parts");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		bool sorted = GetParameters().template Get<int>("sorted") ? true : false;
+		int level = GetParameters().template Get<int>("level");
+		std::string mt = GetParameters().template Get<std::string>("method");
+		metis_idx_t nparts = GetParameters().template Get<metis_idx_t>("parts");
 		idx_t size = A.Size();
 		//output data - which entity should belong to which part
 		std::vector<metis_idx_t> part;
@@ -145,7 +145,7 @@ public:
 			if (!part.empty())
 			{
 				//add another block for separator
-				if (GetParameters().Get<int>("separator"))
+				if (GetParameters().template Get<int>("separator"))
 				{
 #if 0
 					for (idx_t i = 0; i < size; ++i)
@@ -223,7 +223,7 @@ public:
 		{
 			if( level > 0 )
 			{
-				if (GetParameters().Get<std::string>("write_format") == "bin")
+				if (GetParameters().template Get<std::string>("write_format") == "bin")
 				{
 					if (print) std::cout << "save B" << level << ".bin" << std::endl;
 					B.SaveBinary("B" + to_string(level) + ".bin");
@@ -248,7 +248,7 @@ public:
 			}
 			else 
 			{
-				if (GetParameters().Get<std::string>("write_format") == "bin")
+				if (GetParameters().template Get<std::string>("write_format") == "bin")
 				{
 					if (print) std::cout << "save B.bin" << std::endl;
 					B.SaveBinary("B.bin");

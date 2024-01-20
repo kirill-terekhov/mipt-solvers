@@ -2,6 +2,7 @@
 #define _FIEDLER_H
 #include "method.h"
 #include "graph.h"
+#include "priority_queue.h"
 /*
  * Fiedler
  * 
@@ -58,9 +59,9 @@ public:
 	bool HLHSolve(const CSRMatrix& L, const std::vector<double> &u, const std::vector<double> &v, const std::vector<double>& b, std::vector<double>& x) const
 	{
 		idx_t N = L.Size();
-		bool print = (GetParameters().Get<int>("verbosity") & 2) ? true : false;
-		int iters = 0, maxiters = GetParameters().Get<int>("cg_iterations");
-		double resid, beta, alpha, tol = GetParameters().Get<double>("cg_tolerance");
+		bool print = (GetParameters().template Get<int>("verbosity") & 2) ? true : false;
+		int iters = 0, maxiters = GetParameters().template Get<int>("cg_iterations");
+		double resid, beta, alpha, tol = GetParameters().template Get<double>("cg_tolerance");
 		std::vector<double> r = b, p(x.size()), w(x.size());
 		HLHMult(L, u, v, x, w);
 		for (idx_t i = 0; i < N; ++i) r[i] -= w[i];
@@ -87,9 +88,9 @@ public:
 	// Compute Fiedler vector for graph Laplacian L
 	bool FindFiedler(const CSRMatrix& L, std::vector<double>& x, double & lambda) const
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		int maxiters = GetParameters().Get<int>("maxiters");
-		double tolerance = GetParameters().Get<double>("tolerance");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		int maxiters = GetParameters().template Get<int>("maxiters");
+		double tolerance = GetParameters().template Get<double>("tolerance");
 		idx_t N = L.Size();
 		std::vector<double> u(N), v(N), y(N);
 		double alpha, beta, gamma, error, Lmax = 0;
@@ -208,7 +209,7 @@ public:
 
 	std::vector<idx_t> MakeParts(const std::vector<double>& x, double tolerance)
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
 		std::vector<idx_t> part(x.size());
 		int nn = 0, nz = 0, np = 0;
 		for (idx_t k = 0; k < (idx_t)x.size(); ++k)
@@ -254,12 +255,12 @@ public:
 
 	bool Setup(const CSRMatrix& A)
 	{
-		bool print = GetParameters().Get<int>("verbosity") ? true : false;
-		bool write_matrix = GetParameters().Get<int>("write_matrix") ? true : false;
-		bool sorted = GetParameters().Get<int>("sorted") ? true : false;
-		int level = GetParameters().Get<int>("level");
-		int nparts = GetParameters().Get<int>("parts");
-		double tolerance = GetParameters().Get<double>("tolerance");
+		bool print = GetParameters().template Get<int>("verbosity") ? true : false;
+		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
+		bool sorted = GetParameters().template Get<int>("sorted") ? true : false;
+		int level = GetParameters().template Get<int>("level");
+		int nparts = GetParameters().template Get<int>("parts");
+		double tolerance = GetParameters().template Get<double>("tolerance");
 		idx_t size = A.Size();
 		//output data - which entity should belong to which part
 		int depth = (int)ceil(log(nparts)/log(2.0));
@@ -298,7 +299,7 @@ public:
 			}
 			{
 				//add another block for separator
-				if (GetParameters().Get<int>("separator"))
+				if (GetParameters().template Get<int>("separator"))
 				{
 					G = CSRGraph(A.get_ia(), A.get_ja());
 					AddSeparator(G, part, nparts);
@@ -338,7 +339,7 @@ public:
 		{
 			if( level > 0 )
 			{
-				if (GetParameters().Get<std::string>("write_format") == "bin")
+				if (GetParameters().template Get<std::string>("write_format") == "bin")
 				{
 					if (print) std::cout << "save B" << level << ".bin" << std::endl;
 					B.SaveBinary("B" + to_string(level) + ".bin");
@@ -363,7 +364,7 @@ public:
 			}
 			else 
 			{
-				if (GetParameters().Get<std::string>("write_format") == "bin")
+				if (GetParameters().template Get<std::string>("write_format") == "bin")
 				{
 					if (print) std::cout << "save B.bin" << std::endl;
 					B.SaveBinary("B.bin");
