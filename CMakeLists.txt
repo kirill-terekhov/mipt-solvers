@@ -4,6 +4,7 @@ project(lect10)
 
 add_library(lect10 INTERFACE)
 add_executable(BPCG_AMG_GS          utils/bpcg_amg_gs.cpp)
+add_executable(VANKA                utils/vanka.cpp)
 
 
 include_directories(${PROJECT_SOURCE_DIR})
