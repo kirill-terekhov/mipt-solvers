@@ -7,6 +7,7 @@ add_executable(CPR_TS_ILU_AMG          utils/cpr_ts_ilu_amg.cpp)
 add_executable(CPR_TS_GS_AMG           utils/cpr_ts_gs_amg.cpp)
 add_executable(CPR_TSGS_ILU_AMG        utils/cpr_tsgs_ilu_amg.cpp)
 add_executable(CPR_TSGS_GS_AMG         utils/cpr_tsgs_gs_amg.cpp)
+add_executable(FIXED_STRESS_AMG        utils/fixed_stress_amg.cpp)
 
 
 include_directories(${PROJECT_SOURCE_DIR})
