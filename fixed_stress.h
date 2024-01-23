@@ -148,8 +148,8 @@ public:
 				{
 					idx_t p = A.Col(i, j);
 					if (p == i) //shift diagonal
-						B.PushBack(p, A.Val(i, j) + Dpp[i - block_beg]);
-					else //if (p >= block_beg && p < block_end) //TODO!!!
+						B.PushBack(p, A.Val(i, j) - Dpp[i - block_beg]);
+					else if (p >= block_beg && p < block_end) //TODO!!!
 						B.PushBack(p, A.Val(i, j));
 					// zero off-diagonal block!
 				}
