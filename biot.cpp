@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 				ia.push_back((int)ja.size()); //close row
 			}
 		//Fill filtration equation for pressure
-		double WI = 2 * M_PI * kappa / log(0.14 / rw * sqrt(hx2 + hy2));
+		double WI = 2 * M_PI * kappa / log(0.14 / rw * sqrt(hx2 + hy2)) / hxy;
 		for (int i = 0; i < N; ++i)
 			for (int j = 0; j < M; ++j)
 			{

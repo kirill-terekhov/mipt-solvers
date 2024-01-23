@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 		std::fill(x0.begin() + Ss, x0.begin() + Ss + Ns, 0.75); //initial oil saturation 0.75
 		std::copy(x0.begin(), x0.end(), x.begin()); //copy initial to current solution
 		//fill water-oil balance equation
-		double WI = 2 * M_PI * kappa / log(0.14 / rw * sqrt(hx2 + hy2));
+		double WI = 2 * M_PI * kappa / log(0.14 / rw * sqrt(hx2 + hy2)) / (hx * hy);
 		for (int q = 0; q < 2; ++q) // q = 0 - water, q = 1 - oil
 		for (int i = 0; i < N; ++i)
 			for (int j = 0; j < M; ++j)
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 						}
 				if (i == 0 && j == 0 && q == 0) //add water injection well with bottom hole pressure 150 [bhp]
 				{
-					// WI * (p - 10)
+					// WI * (p - 150)
 					u = WI * dt * (p(i, j) - 150);
 					kr = 1;
 					a[ijpos] += kr * WI * dt;
