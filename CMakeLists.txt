@@ -3,7 +3,7 @@ project(lect7)
 
 
 add_library(lect7 INTERFACE)
-add_executable(MLILDUC        utils/mlilduc.cpp)
+add_executable(MLILDUCM        utils/mlilducM.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 

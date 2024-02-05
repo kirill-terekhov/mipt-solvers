@@ -1,6 +1,5 @@
-
-#ifndef _ILDUC_H
-#define _ILDUC_H
+#ifndef _MLILDUCM_H
+#define _MLILDUCM_H
 
 
 #include "csrmatrix.h"
@@ -11,7 +10,7 @@
 #include "method.h"
 
 /*
- * MLILDUC - multi-level inverse-based Crout incomplete LDU factorization
+ * MLILDUCM - multi-level inverse-based Crout incomplete LDU factorization, M-version
  * Implemented following 
  * [1] "Crout Versions of ILU for General Sparse Matrices"
  * by N.Li, Y.Saad, E.Show
@@ -22,7 +21,7 @@
  */
  
 
-class MLILDUC : public Methods
+class MLILDUCM : public Methods
 {
 	CSRTriangular L, U; ///< factors
 	CSRMatrix E,F,S; ///< parts of the matrix and schur complement
@@ -35,7 +34,7 @@ public:
 	static Parameters DefaultParameters()
 	{
 		Parameters ret;
-		ret.Set("name","MLILDUC");
+		ret.Set("name","MLILDUCM");
 		ret.Set("drop_tolerance",0.1);
 		ret.Set("diagonal_tolerance",1.0e-7);
 		ret.Set("diagonal_perturbation",1.0e-9);
@@ -49,8 +48,8 @@ public:
 		ret.Set("level","*");
 		return ret;
 	}
-	MLILDUC() : L(CSRTriangular::LowerCSC), U(CSRTriangular::UpperCSR), Next(NULL) {GetParameters() = DefaultParameters();}
-	~MLILDUC() {if(Next) delete Next;}
+	MLILDUCM() : L(CSRTriangular::LowerCSC), U(CSRTriangular::UpperCSR), Next(NULL) {GetParameters() = DefaultParameters();}
+	~MLILDUCM() {if(Next) delete Next;}
 	bool Setup(const CSRMatrix & Ain)
 	{
 		bool   print        = GetParameters().Get<int>("verbosity") & 1 ? true : false;
@@ -564,7 +563,7 @@ public:
 			}
 			//setup next level system
 			if( print ) std::cout << "Setup next level" << std::endl;
-			Next = new MLILDUC();
+			Next = new MLILDUCM();
 			Next->GetParameters() = GetParameters();
 			Next->GetParameters().SetRecursive("level",level+1);
 			success = Next->Setup(S);
@@ -641,7 +640,7 @@ public:
 		}
 		return true;
 	}
-	size_t Bytes() const {return U.Bytes() + L.Bytes() + get_bytes(D) + sizeof(const CSRMatrix *);}
+	size_t Bytes() const { return U.Bytes() + L.Bytes() + get_bytes(D) + E.Bytes() + F.Bytes() + S.Bytes() + get_bytes(iP) + get_bytes(f) + get_bytes(g) + get_bytes(y) + sizeof(const CSRMatrix*) + (Next ? Next->Bytes() : 0); }
 };
 
 #endif //_ILDUC_H
