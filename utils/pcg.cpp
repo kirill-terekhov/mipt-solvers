@@ -1,9 +1,9 @@
 #include "pcg.h"
 #include "chebyshev.h"
+#include "get_time.h"
 
 int main(int argc, char ** argv)
 {
-
 	PCG< Chebyshev > Solver;
 
 	if (argc < 2)
@@ -41,7 +41,17 @@ int main(int argc, char ** argv)
 		Solver.GetParameters().Load("params_cg.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		Solver.GetParameters().Print();
-		if( Solver.Setup(A) && Solver.Solve(b,x) )
+		bool success = true;
+		double t1, t2;
+		t1 = get_time();
+		success &= Solver.Setup(A);
+		t2 = get_time();
+		std::cout << "Setup time: " << t2 - t1 << std::endl;
+		t1 = get_time();
+		success &= Solver.Solve(b, x);
+		t2 = get_time();
+		std::cout << "Solve time: " << t2 - t1 << std::endl;
+		if( success )
 		{
 			std::cout << "Solver consumed: " << Solver.Bytes() / 1024  << " KB" << std::endl;
 			std::cout << "Matrix consumed: " << A.Bytes() / 1024 << " KB" << std::endl;
