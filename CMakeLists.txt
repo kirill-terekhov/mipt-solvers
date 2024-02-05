@@ -4,7 +4,6 @@ project(lect4)
 
 add_library(lect4 INTERFACE)
 add_executable(PCG_AMG_CHEB        utils/pcg_amg_cheb.cpp)
-add_executable(BICGSTAB_AMG_CHEB   utils/bicgstab_amg_cheb.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
