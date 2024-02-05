@@ -102,7 +102,7 @@ public:
 		}
 		if (print)
 		{
-			std::cout << "PCG " << std::setw(4) << iters;
+			std::cout << "PCG " << std::setw(4) << iters - 1;
 			if( ptrue )
 				std::cout << " true " << std::setw(14) << Resid(A, b, x);
 			std::cout << std::endl;
