@@ -2,6 +2,7 @@
 #include "amg_ruge_stuben.h"
 #include "gauss_seidel.h"
 #include "ilduc.h"
+#include "get_time.h"
 
 int main(int argc, char ** argv)
 {
@@ -43,8 +44,22 @@ int main(int argc, char ** argv)
 		Solver.GetParameters().Load("params.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		Solver.GetParameters().Print();
-		if( Solver.Setup(A) && Solver.Solve(b,x) )
+		bool success = true;
+		double t1, t2, t3, t4;
+		t1 = get_time();
+		success &= Solver.Setup(A);
+		t2 = get_time();
+		std::cout << "Setup time: " << t2 - t1 << std::endl;
+		t3 = get_time();
+		success &= Solver.Solve(b, x);
+		t4 = get_time();
+		std::cout << "Solve time: " << t2 - t1 << std::endl;
+		if (success)
 		{
+			std::cout << "Time setup " << t2 - t1 << " iterations " << t4 - t3 << " solve " << t4 - t1 << std::endl;
+			std::cout << "Solver consumed: " << Solver.Bytes() / 1024 << " KB" << std::endl;
+			std::cout << "Matrix consumed: " << A.Bytes() / 1024 << " KB" << std::endl;
+			std::cout << "Vector consumed: " << get_bytes(b) / 1024 << " KB" << std::endl;
 			std::cout << "Final residual " << Resid(A,b,x) << std::endl;
 			SaveVector(std::string("solution"),x);
 			return 0;
