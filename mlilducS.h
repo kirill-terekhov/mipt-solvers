@@ -526,7 +526,7 @@ public:
 		}
 		return true;
 	}
-	size_t Bytes() const {return U.Bytes() + L.Bytes() + get_bytes(D) + E.Bytes() + F.Bytes() + S.Bytes() + get_bytes(f) + get_bytes(g) + get_bytes(y) + sizeof(const CSRMatrix*) + (Next ? Next->Bytes() : 0); }
+	size_t Bytes() const {return U.Bytes() + L.Bytes() + get_bytes(D) + E.Bytes() + F.Bytes() + S.Bytes() + get_bytes(iP) + get_bytes(f) + get_bytes(g) + get_bytes(y) + sizeof(const CSRMatrix*) + (Next ? Next->Bytes() : 0); }
 };
 
 #endif //_MLILDUCS_H
