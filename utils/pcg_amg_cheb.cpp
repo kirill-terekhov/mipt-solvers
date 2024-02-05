@@ -2,6 +2,7 @@
 #include "amg_ruge_stuben.h"
 #include "chebyshev.h"
 #include "ilduc.h"
+#include "get_time.h"
 
 int main(int argc, char ** argv)
 {
