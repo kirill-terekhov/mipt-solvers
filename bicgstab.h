@@ -134,7 +134,7 @@ public:
 		} while ( resid > ftol && resid < dtol && omega && iters < maxiters+1);
 		if (print)
 		{
-			std::cout << "BICGSTAB " << std::setw(4) << iters-1 << " " << std::setw(12) << resid << " | " << ftol;
+			std::cout << "BICGSTAB " << std::setw(4) << iters - 1 << " " << std::setw(12) << resid << " | " << ftol;
 			if( ptrue )
 				std::cout << " true " << Resid(A, b, x);
 			//std::cout << "\r";

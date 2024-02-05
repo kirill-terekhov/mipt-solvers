@@ -19,7 +19,7 @@ public:
 		ret.Set("dtol",1.0e+10);
 		ret.Set("maxiters",5000);
 		ret.Set("verbosity",1);
-		ret.Set("true_residual", 1);
+		ret.Set("true_residual", 0);
 		ret.SubParameters("Preconditioner") = Preconditioner::DefaultParameters();
 		return ret;
 	}
@@ -102,7 +102,7 @@ public:
 		}
 		if (print)
 		{
-			std::cout << "PCG " << std::setw(4) << iters;
+			std::cout << "PCG " << std::setw(4) << iters - 1;
 			if( ptrue )
 				std::cout << " true " << std::setw(14) << Resid(A, b, x);
 			std::cout << std::endl;
