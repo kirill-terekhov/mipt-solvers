@@ -1,12 +1,6 @@
 #include "bicgstab.h"
-#include "mlilduc.h"
-
-const double tol = 1.0e-7;
-const int maxits = 10000;
-
-
-
-
+#include "mlilducS.h"
+#include "get_time.h"
 
 int main(int argc, char ** argv)
 {
@@ -36,7 +30,7 @@ int main(int argc, char ** argv)
 				LoadVector(std::string(argv[3]),x);
 		}
 		
-		BICGSTAB< MLILDUC > Solver;
+		BICGSTAB< MLILDUCS > Solver;
 		
 		Solver.GetParameters().Save("params_default.txt");
 		Solver.GetParameters().SaveRaw("params_default.raw");
@@ -44,18 +38,22 @@ int main(int argc, char ** argv)
 		Solver.GetParameters().Load("params_mlilduc.txt");
 		std::cout << "Loaded parameters: " << std::endl;
 		Solver.GetParameters().Print();
-		bool success;
-		
-		
-		
-		success = Solver.Setup(A);
-		
-		
-		if( success )
-			success = Solver.Solve(b,x);
-		
-		if( success )
+		bool success = true;
+		double t1, t2, t3, t4;
+		t1 = get_time();
+		success &= Solver.Setup(A);
+		t2 = get_time();
+		std::cout << "Setup time: " << t2 - t1 << std::endl;
+		t3 = get_time();
+		success &= Solver.Solve(b, x);
+		t4 = get_time();
+		std::cout << "Solve time: " << t2 - t1 << std::endl;
+		if (success)
 		{
+			std::cout << "Time setup " << t2 - t1 << " iterations " << t4 - t3 << " solve " << t4 - t1 << std::endl;
+			std::cout << "Solver consumed: " << Solver.Bytes() / 1024 << " KB" << std::endl;
+			std::cout << "Matrix consumed: " << A.Bytes() / 1024 << " KB" << std::endl;
+			std::cout << "Vector consumed: " << get_bytes(b) / 1024 << " KB" << std::endl;
 			std::cout << "Final residual " << Resid(A,b,x) << std::endl;
 			SaveVector(std::string("solution"),x);
 			return 0;

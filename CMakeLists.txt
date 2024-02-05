@@ -3,7 +3,7 @@ project(lect6)
 
 
 add_library(lect6 INTERFACE)
-add_executable(MLILDUC        utils/mlilduc.cpp)
+add_executable(MLILDUCS        utils/mlilducS.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
