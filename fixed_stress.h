@@ -68,73 +68,47 @@ public:
 			std::cout << "Method " << type << " pressure block " << block_beg << ":" << block_end << " write " << (write_matrix ? "yes" : "no") << std::endl;
 		if( type == "fixed-stress" )
 		{
-			BICGSTAB<DisplacementSolver> S;
-			S.GetParameters() = S.DefaultParameters();
-			S.GetParameters().SubParameters("Preconditioner") = GetParameters().SubParameters("SecondSolver");
-			CSRMatrix Auu;
 			idx_t block_size = block_end - block_beg;
-			std::vector<double> Dpp(block_size, 0.0); //diagonal shift
-			//extract second block (displacement)
+			std::vector<double> Duu(A.Size() - block_size, 0.0), Dpp(block_size, 0.0); //diagonal
+			//extract inverse diagonal of the second block (displacement, Auu)
 			{
 				for (idx_t i = 0; i < block_beg; ++i)
 				{
-					for (idx_t j = 0; j < A.RowSize(i); ++j)
-					{
-						if (A.Col(i, j) < block_beg)
-							Auu.PushBack(A.Col(i, j), A.Val(i, j));
-					}
-					Auu.FinalizeRow();
+					for (idx_t j = 0; j < A.RowSize(i); ++j) 
+						if (A.Col(i, j) == i) Duu[i] = A.Val(i, j);
 				}
 				for (idx_t i = block_end; i < A.Size(); ++i)
 				{
 					for (idx_t j = 0; j < A.RowSize(i); ++j)
-					{
-						if (A.Col(i, j) >= block_end)
-							Auu.PushBack(A.Col(i, j) - block_size, A.Val(i, j));
-					}
-					Auu.FinalizeRow();
+						if (A.Col(i, j) == i) Duu[i - block_size] = A.Val(i, j);
 				}
 			}
-			if (S.Setup(Auu))
+			//multiplication Apu to Aup normalized by Duu
+			//Go over rows of Apu
+			for (idx_t i = block_beg; i < block_end; ++i)
 			{
-				std::vector<double> b(Auu.Size(), 0.0); //multiplication of e by Aup
-				std::vector<double> x(Auu.Size(), 0.0); //solution with Auu
-				//multiply by off-second block part of displacement Aup
-				for (idx_t i = 0; i < block_beg; ++i)
+				for (idx_t j = 0; j < A.RowSize(i); ++j)
 				{
-					for (idx_t j = 0; j < A.RowSize(i); ++j)
+					idx_t p = A.Col(i, j);
+					double aip = A.Val(i, j);
+					if (p < block_beg || p >= block_end)
 					{
-						idx_t p = A.Col(i, j);
-						if (p >= block_beg && p < block_end)
-							b[i] += A.Val(i, j);
-					}
-				}
-				//multiply by off-second block part of displacement Aup
-				for (idx_t i = block_end; i < A.Size(); ++i)
-				{
-					for (idx_t j = 0; j < A.RowSize(i); ++j)
-					{
-						idx_t p = A.Col(i, j);
-						if (p >= block_beg && p < block_end)
-							b[i - block_size] += A.Val(i, j);
-					}
-				}
-				if (!S.Solve(b, x))
-					return false;
-				//multiplication of x by Apu to get Dpp
-				for (idx_t i = block_beg; i < block_end; ++i)
-				{
-					for (idx_t j = 0; j < A.RowSize(i); ++j)
-					{
-						idx_t p = A.Col(i, j);
-						if (p < block_beg)
-							Dpp[i - block_beg] += A.Val(i, j) * x[p];
-						else if (p >= block_end)
-							Dpp[i - block_beg] += A.Val(i, j) * x[p - block_size];
+						//find element, contributing to diagonal in Aup
+						for (idx_t l = 0; l < A.RowSize(p); ++l)
+						{
+							idx_t m = A.Col(p, l);
+							double api = A.Val(p, l);
+							if (m == i)
+							{
+								double duu = Duu[p >= block_end ? p - block_size : p];
+								//std::cout << i << " add (" << i << "," << p << "," << aip << ") * (" << p << ',' << m << "," << api << ") / (" << (p >= block_end ? p - block_size : p) << "," << duu << ") = "  << aip * api / duu << std::endl;
+								Dpp[i - block_beg] += aip * api / duu;
+								//std::cout << "result: " << Dpp[i - block_beg] <<  " i " << i << " " << i - block_beg << std::endl;
+							}
+						}
 					}
 				}
 			}
-			else return false;
 			//assemble shifted and decoupled matrix
 			for (idx_t i = 0; i < block_beg; ++i)
 			{
@@ -148,7 +122,7 @@ public:
 				{
 					idx_t p = A.Col(i, j);
 					if (p == i) //shift diagonal
-						B.PushBack(p, A.Val(i, j) - Dpp[i - block_beg]);
+						B.PushBack(p, A.Val(i, j) -Dpp[i - block_beg]);
 					else if (p >= block_beg && p < block_end) //TODO!!!
 						B.PushBack(p, A.Val(i, j));
 					// zero off-diagonal block!

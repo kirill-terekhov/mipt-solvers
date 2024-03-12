@@ -7,7 +7,8 @@
 int main(int argc, char ** argv)
 {
 	typedef AMGRugeStuben<GaussSeidel, BICGSTAB<ILDUC> > AMG;
-	BICGSTAB< FixedStress<AMG, ILDUC> > Solver;
+	//BICGSTAB< FixedStress<AMG, ILDUC> > Solver;
+	BICGSTAB< FixedStress<AMG, AMG> > Solver;
 
 	if (argc < 3)
 	{
