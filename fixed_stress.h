@@ -39,7 +39,11 @@
 template<typename PressureSolver, typename DisplacementSolver>
 class FixedStress : public virtual Methods, public TwoStageGaussSeidel<PressureSolver, DisplacementSolver>
 {
+	const CSRMatrix* ptr_A;
 	CSRMatrix B;
+	std::vector<bool> excl;
+	std::vector<int> off;
+	mutable std::vector<double> f, y;
 public:
 	static Parameters DefaultParameters()
 	{
@@ -64,13 +68,37 @@ public:
 		bool write_matrix = GetParameters().template Get<int>("write_matrix") ? true : false;
 		idx_t block_beg = GetParameters().template Get<idx_t>("block_beg");
 		idx_t block_end = GetParameters().template Get<idx_t>("block_end");
+		ptr_A = &A;
 		if( print )
 			std::cout << "Method " << type << " pressure block " << block_beg << ":" << block_end << " write " << (write_matrix ? "yes" : "no") << std::endl;
-		if( type == "fixed-stress" )
+		excl.resize(A.Size(), false);
+		off.resize(A.Size()+1, 0);
+		int nskip = 0;
+#if 1
+		for (idx_t k = 0; k < A.Size(); ++k)
+		{
+			off[k] = nskip;
+			if (A.RowSize(k) == 1 && A.Col(k, 0) == k)
+			{
+				excl[k] = true;
+				nskip++;
+			}
+		}
+		off.back() = nskip;
+#endif
+		y.resize(A.Size() - nskip);
+		f.resize(A.Size() - nskip);
+		GetParameters().Set("block_beg", block_beg - off[block_beg]);
+		GetParameters().Set("block_end", block_end - off[block_end]);
+		bool fixed_stress = false;
+		if( type == "fixed-stress" || type == "fixed-strain")
 		{
 			idx_t block_size = block_end - block_beg;
 			std::vector<double> Duu(A.Size() - block_size, 0.0), Dpp(block_size, 0.0); //diagonal
+			if (type == "fixed-stress")
+				fixed_stress = true;
 			//extract inverse diagonal of the second block (displacement, Auu)
+			if( fixed_stress )
 			{
 				for (idx_t i = 0; i < block_beg; ++i)
 				{
@@ -85,54 +113,57 @@ public:
 			}
 			//multiplication Apu to Aup normalized by Duu
 			//Go over rows of Apu
-			for (idx_t i = block_beg; i < block_end; ++i)
+			if (fixed_stress)
 			{
-				for (idx_t j = 0; j < A.RowSize(i); ++j)
+				for (idx_t i = block_beg; i < block_end; ++i)
 				{
-					idx_t p = A.Col(i, j);
-					double aip = A.Val(i, j);
-					if (p < block_beg || p >= block_end)
+					for (idx_t j = 0; j < A.RowSize(i); ++j)
 					{
-						//find element, contributing to diagonal in Aup
-						for (idx_t l = 0; l < A.RowSize(p); ++l)
+						idx_t p = A.Col(i, j);
+						double aip = A.Val(i, j);
+						if (p < block_beg || p >= block_end)
 						{
-							idx_t m = A.Col(p, l);
-							double api = A.Val(p, l);
-							if (m == i)
+							//find element, contributing to diagonal in Aup
+							for (idx_t l = 0; l < A.RowSize(p); ++l)
 							{
-								double duu = Duu[p >= block_end ? p - block_size : p];
-								//std::cout << i << " add (" << i << "," << p << "," << aip << ") * (" << p << ',' << m << "," << api << ") / (" << (p >= block_end ? p - block_size : p) << "," << duu << ") = "  << aip * api / duu << std::endl;
-								Dpp[i - block_beg] += aip * api / duu;
-								//std::cout << "result: " << Dpp[i - block_beg] <<  " i " << i << " " << i - block_beg << std::endl;
+								idx_t m = A.Col(p, l);
+								double api = A.Val(p, l);
+								if (m == i)
+								{
+									double duu = Duu[p >= block_end ? p - block_size : p];
+									//std::cout << i << " add (" << i << "," << p << "," << aip << ") * (" << p << ',' << m << "," << api << ") / (" << (p >= block_end ? p - block_size : p) << "," << duu << ") = "  << aip * api / duu << std::endl;
+									Dpp[i - block_beg] += aip * api / duu;
+									//std::cout << "result: " << Dpp[i - block_beg] <<  " i " << i << " " << i - block_beg << std::endl;
+								}
 							}
 						}
 					}
 				}
 			}
 			//assemble shifted and decoupled matrix
-			for (idx_t i = 0; i < block_beg; ++i)
+			for (idx_t i = 0; i < block_beg; ++i) if(!excl[i])
 			{
-				for (idx_t j = 0; j < A.RowSize(i); ++j)
-					B.PushBack(A.Col(i, j), A.Val(i, j));
+				for (idx_t j = 0; j < A.RowSize(i); ++j) if (!excl[A.Col(i, j)])
+					B.PushBack(A.Col(i, j) - off[A.Col(i, j)], A.Val(i, j));
 				B.FinalizeRow();
 			}
-			for (idx_t i = block_beg; i < block_end; ++i)
+			for (idx_t i = block_beg; i < block_end; ++i) if(!excl[i])
 			{
-				for (idx_t j = 0; j < A.RowSize(i); ++j)
+				for (idx_t j = 0; j < A.RowSize(i); ++j) if (!excl[A.Col(i, j)])
 				{
 					idx_t p = A.Col(i, j);
 					if (p == i) //shift diagonal
-						B.PushBack(p, A.Val(i, j) -Dpp[i - block_beg]);
-					else if (p >= block_beg && p < block_end) //TODO!!!
-						B.PushBack(p, A.Val(i, j));
+						B.PushBack(p - off[p], A.Val(i, j) - Dpp[i - block_beg]);
+					else if (!fixed_stress || (p >= block_beg && p < block_end)) //TODO!!!
+						B.PushBack(p - off[p], A.Val(i, j));
 					// zero off-diagonal block!
 				}
 				B.FinalizeRow();
 			}
-			for (idx_t i = block_end; i < A.Size(); ++i)
+			for (idx_t i = block_end; i < A.Size(); ++i) if (!excl[i])
 			{
-				for (idx_t j = 0; j < A.RowSize(i); ++j)
-					B.PushBack(A.Col(i, j), A.Val(i, j));
+				for (idx_t j = 0; j < A.RowSize(i); ++j) if (!excl[A.Col(i, j)])
+					B.PushBack(A.Col(i, j) - off[A.Col(i, j)], A.Val(i, j));
 				B.FinalizeRow();
 			}
 			if (print)
@@ -141,8 +172,6 @@ public:
 			}
 			return TwoStageGaussSeidel<PressureSolver, DisplacementSolver>::Setup(B);
 		}
-		else if (type == "fixed-strain")
-			return TwoStageGaussSeidel<PressureSolver,DisplacementSolver>::Setup(A);
 		else
 		{
 			std::cout << "Error: unknown method type " << type << " expected either fixed-stress or fixed-strain." << std::endl;
@@ -151,7 +180,20 @@ public:
 	}
 	bool Solve(const std::vector<double> & b, std::vector<double> & x) const
 	{
-		return TwoStageGaussSeidel<PressureSolver,DisplacementSolver>::Solve(b,x);
+		const CSRMatrix& A = *ptr_A;
+		for (idx_t k = 0; k < A.Size(); ++k) if (excl[k])
+			x[k] = b[k] / A.Val(k, 0);
+		for (idx_t k = 0; k < A.Size(); ++k) if (!excl[k])
+		{
+			y[k - off[k]] = x[k];
+			f[k - off[k]] = b[k];
+			for (idx_t l = 0; l < A.RowSize(k); ++l) if (excl[A.Col(k, l)])
+				f[k - off[k]] -= A.Val(k, l) * x[A.Col(k, l)];
+		}
+		bool success = TwoStageGaussSeidel<PressureSolver,DisplacementSolver>::Solve(f,y);
+		for (idx_t k = 0; k < A.Size(); ++k) if (!excl[k])
+			x[k] = y[k - off[k]];
+		return success;
 	}
 	size_t Bytes() const 
 	{

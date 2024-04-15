@@ -21,7 +21,7 @@ public:
 		ret.Set("block_beg",0);
 		ret.Set("block_end",0);
 		ret.Set("check",0);
-		ret.Set("verbosity",1);
+		ret.Set("verbosity",0);
 		ret.Set("write_matrix",0);
 		ret.SubParameters("BlockSolver") = Block1Solver::DefaultParameters();
 		ret.SubParameters("SecondSolver") = Block2Solver::DefaultParameters();
