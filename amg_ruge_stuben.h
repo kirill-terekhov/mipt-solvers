@@ -82,7 +82,7 @@ public:
 						{
 							idx_t l = S.Col(j,lt);
 							if( CF[l] == U ) 
-								queue.IncreaseKey(l,queue.GetKey(l)+1);
+								queue.ChangeKey(l,queue.GetKey(l)+1);
 						}
 					}
 				}
@@ -90,7 +90,7 @@ public:
 				{
 					idx_t j = S.Col(i,jt);
 					if( CF[j] == U ) 
-						queue.DecreaseKey(j,queue.GetKey(j)-1);
+						queue.ChangeKey(j,queue.GetKey(j)-1);
 				}
 			}
 		}
